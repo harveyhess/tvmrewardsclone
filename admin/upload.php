@@ -64,6 +64,8 @@ error_log("Session data: " . print_r($_SESSION, true));
                 <p>Additional columns will be ignored.</p>
             </section>
 
+            <a href="cron/process_transactions.php" class="button">Run Cron Job</a>
+
             <?php if (isset($_SESSION['flash_message'])): ?>
                 <div class="flash-message <?php echo $_SESSION['flash_message']['type']; ?>">
                     <?php 

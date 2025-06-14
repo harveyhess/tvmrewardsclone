@@ -36,15 +36,9 @@ if (isset($_SESSION['is_admin'])) {
 
 $controller = new PatientController();
 $patient = $controller->getPatientDetails($_SESSION['user_id']);
-
-if (!$patient) {
-    error_log("Dashboard - Patient not found. Destroying session.");
-    session_destroy();
-    header('Location: login.php');
-    exit;
-}
-
 $transactions = $controller->getPatientTransactions($_SESSION['user_id']);
+$rewards = $controller->getAvailableRewards();
+$redemptions = $controller->getPatientRedemptions($_SESSION['user_id']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -61,6 +55,7 @@ $transactions = $controller->getPatientTransactions($_SESSION['user_id']);
             <nav>
                 <a href="dashboard.php" class="active">Dashboard</a>
                 <a href="transactions.php">Transactions</a>
+                <a href="rewards.php">Rewards</a>
                 <a href="logout.php">Logout</a>
             </nav>
         </header>
@@ -72,9 +67,39 @@ $transactions = $controller->getPatientTransactions($_SESSION['user_id']);
                     <p class="points"><?php echo $patient['total_points']; ?></p>
                 </div>
                 <div class="points-card">
-                    <h3>Patient ID</h3>
-                    <p><?php echo htmlspecialchars($patient['patient_id']); ?></p>
+                    <h3>Current Tier</h3>
+                    <p class="tier"><?php echo htmlspecialchars($patient['tier_name'] ?? 'No Tier'); ?></p>
                 </div>
+                <div class="points-card">
+                    <h3>Patient ID</h3>
+                    <p><?php echo htmlspecialchars($patient['UHID']); ?></p>
+                </div>
+            </section>
+
+            <section class="available-rewards">
+                <h2>Available Rewards</h2>
+                <?php if (empty($rewards)): ?>
+                    <p>No rewards available at the moment.</p>
+                <?php else: ?>
+                    <div class="rewards-grid">
+                        <?php foreach ($rewards as $reward): ?>
+                            <div class="reward-card">
+                                <h3><?php echo htmlspecialchars($reward['name']); ?></h3>
+                                <p class="description"><?php echo htmlspecialchars($reward['description']); ?></p>
+                                <p class="points-cost"><?php echo $reward['points_cost']; ?> points</p>
+                                <?php if ($patient['total_points'] >= $reward['points_cost']): ?>
+                                    <button class="redeem-button" data-reward-id="<?php echo $reward['id']; ?>">
+                                        Redeem
+                                    </button>
+                                <?php else: ?>
+                                    <button class="redeem-button disabled" disabled>
+                                        Not enough points
+                                    </button>
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
             </section>
 
             <section class="recent-transactions">
@@ -102,9 +127,64 @@ $transactions = $controller->getPatientTransactions($_SESSION['user_id']);
                     </table>
                 <?php endif; ?>
             </section>
+
+            <section class="recent-redemptions">
+                <h2>Recent Redemptions</h2>
+                <?php if (empty($redemptions)): ?>
+                    <p>No redemptions found.</p>
+                <?php else: ?>
+                    <table class="redemptions-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Reward</th>
+                                <th>Points</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($redemptions as $redemption): ?>
+                            <tr>
+                                <td><?php echo date('Y-m-d', strtotime($redemption['created_at'])); ?></td>
+                                <td><?php echo htmlspecialchars($redemption['reward_name']); ?></td>
+                                <td><?php echo $redemption['points_spent']; ?></td>
+                                <td>
+                                    <span class="status <?php echo $redemption['status']; ?>">
+                                        <?php echo ucfirst($redemption['status']); ?>
+                                    </span>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php endif; ?>
+            </section>
         </main>
     </div>
 
-    <script src="../src/assets/js/patient.js"></script>
+    <script>
+        document.querySelectorAll('.redeem-button:not(.disabled)').forEach(button => {
+            button.addEventListener('click', function() {
+                if (confirm('Are you sure you want to redeem this reward?')) {
+                    const rewardId = this.dataset.rewardId;
+                    fetch('redeem_reward.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ reward_id: rewardId })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert('Error redeeming reward: ' + data.error);
+                        }
+                    });
+                }
+            });
+        });
+    </script>
 </body>
 </html> 

@@ -29,7 +29,10 @@ $stats = $controller->getDashboardStats();
             <nav>
                 <a href="dashboard.php" class="active">Dashboard</a>
                 <a href="patients.php">Patients</a>
+                <a href="tiers.php">Tiers</a>
+                <a href="rewards.php">Rewards</a>
                 <a href="upload.php">Upload CSV</a>
+                <a href="transactions.php">Transactions</a>
                 <a href="logout.php">Logout</a>
             </nav>
         </header>
@@ -55,10 +58,14 @@ $stats = $controller->getDashboardStats();
                 <div class="action-buttons">
                     <a href="upload.php" class="button">Upload CSV</a>
                     <a href="patients.php" class="button">View Patients</a>
+                    <a href="tiers.php" class="button">Manage Tiers</a>
+                    <a href="rewards.php" class="button">Manage Rewards</a>
+                    <a href="transactions.php" class="button">View Transactions</a>
                     <a href="export.php" class="button">Export Data</a>
                 </div>
             </section>
         </main>
     </div>
+    <script src="../src/assets/js/admin.js"></script>
 </body>
 </html> 

@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . '/Database.php';
+require_once __DIR__ . '/../src/controllers/TierController.php';
+
 class CsvHandler {
     private $db;
     private $errors = [];
@@ -91,14 +94,14 @@ class CsvHandler {
 
             // Check if patient exists
             $patient = $this->db->fetch(
-                "SELECT id FROM patients WHERE patient_id = ?",
+                "SELECT id FROM patients WHERE UHID = ?",
                 [$data['patientid']]
             );
 
             if (!$patient) {
                 // Create new patient
                 $patientId = $this->db->insert('patients', [
-                    'patient_id' => $data['patientid'],
+                    'UHID' => $data['patientid'],
                     'name' => $data['name'],
                     'phone_number' => $data['phonenumber'],
                     'total_points' => $points,
@@ -117,10 +120,14 @@ class CsvHandler {
 
             // Record transaction
             $this->db->insert('transactions', [
-                'patient_id' => $patientId,
+                'UHID' => $patientId,
                 'amount_paid' => $data['amountpaid'],
                 'points_earned' => $points
             ]);
+
+            // Update patient's tier
+            $tierController = new TierController(false);
+            $tierController->updatePatientTier($patientId);
 
             $this->db->getConnection()->commit();
             $this->processedRows++;

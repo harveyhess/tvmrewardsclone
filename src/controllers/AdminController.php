@@ -2,6 +2,8 @@
 require_once __DIR__ . '/BaseController.php';
 require_once __DIR__ . '/../../includes/CsvHandler.php';
 require_once __DIR__ . '/../../includes/Database.php';
+require_once __DIR__ . '/RewardController.php';
+require_once __DIR__ . '/TierController.php';
 
 class AdminController extends BaseController {
     protected $db;
@@ -85,7 +87,7 @@ class AdminController extends BaseController {
 
                 // Insert or update patient
                 $patient = $this->db->fetch(
-                    "SELECT id FROM patients WHERE patient_id = ?",
+                    "SELECT id FROM patients WHERE UHID = ?",
                     [$patientId]
                 );
 
@@ -95,7 +97,7 @@ class AdminController extends BaseController {
                 } else {
                     error_log("Creating new patient: " . $patientId);
                     $this->db->execute(
-                        "INSERT INTO patients (patient_id, name, phone_number) VALUES (?, ?, ?)",
+                        "INSERT INTO patients (UHID, name, phone_number) VALUES (?, ?, ?)",
                         [$patientId, $name, $phone]
                     );
                     $patientId = $this->db->lastInsertId();
@@ -152,7 +154,7 @@ class AdminController extends BaseController {
             return $this->jsonResponse(['error' => 'Invalid request method'], 400);
         }
 
-        $patientId = $this->sanitizeInput($_POST['patient_id']);
+        $patientId = $this->sanitizeInput($_POST['UHID']);
         $points = (int)$_POST['points'];
 
         try {
@@ -185,7 +187,7 @@ class AdminController extends BaseController {
 
     public function exportPatients() {
         $patients = $this->db->fetchAll(
-            "SELECT patient_id, name, phone_number, total_points FROM patients ORDER BY name"
+            "SELECT UHID, name, phone_number, total_points FROM patients ORDER BY name"
         );
 
         header('Content-Type: text/csv');
@@ -228,7 +230,7 @@ class AdminController extends BaseController {
         // Return both token and patient info
         return [
             'token' => $patient['qr_token'],
-            'patient_id' => $patient['patient_id'],
+            'UHID' => $patient['UHID'],
             'name' => $patient['name'],
             'phone' => $patient['phone_number'],
             'login_data' => base64_encode(json_encode($loginData))
@@ -254,7 +256,17 @@ class AdminController extends BaseController {
         $result = $this->db->fetch("SELECT COUNT(*) as count FROM transactions");
         $stats['total_transactions'] = $result['count'];
 
+        // Ensure points are being updated when transactions are processed
+        $this->updatePointsFromTransactions();
+
         return $stats;
+    }
+
+    private function updatePointsFromTransactions() {
+        $transactions = $this->db->fetchAll("SELECT * FROM transactions");
+        foreach ($transactions as $transaction) {
+            $this->updatePoints($transaction['UHID'], $transaction['points_earned']);
+        }
     }
 
     public function getPatients($page = 1, $limit = 10) {
@@ -277,18 +289,71 @@ class AdminController extends BaseController {
     }
 
     public function updatePoints($patientId, $points) {
+        try {
+            $this->db->getConnection()->beginTransaction();
+
         // First update the patient's total points
         $this->db->execute(
             "UPDATE patients SET total_points = total_points + ? WHERE id = ?",
             [$points, $patientId]
         );
 
-        // If points are being added, create a transaction record
+            // If points are being added, create a transaction record and points ledger entry
         if ($points > 0) {
-            $this->db->execute(
-                "INSERT INTO transactions (patient_id, amount_paid, points_earned) VALUES (?, ?, ?)",
-                [$patientId, $points * 100, $points] // Assuming 1 point per 100 KES
-            );
+                $transactionId = $this->db->insert('transactions', [
+                    'UHID' => $patientId,
+                    'amount_paid' => $points * 100, // Assuming 1 point per 100 KES
+                    'points_earned' => $points
+                ]);
+
+                // Add to points ledger
+                $this->db->insert('points_ledger', [
+                    'UHID' => $patientId,
+                    'points' => $points,
+                    'type' => 'earn',
+                    'reference_id' => $transactionId,
+                    'reference_type' => 'transaction',
+                    'description' => "Points earned from transaction"
+                ]);
+            }
+
+            // Update patient's tier
+            $tierController = new TierController();
+            $tierController->updatePatientTier($patientId);
+
+            $this->db->getConnection()->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->db->getConnection()->rollBack();
+            error_log("Error updating points: " . $e->getMessage());
+            return false;
         }
+    }
+
+    public function getTiers() {
+        $tierController = new TierController();
+        return $tierController->getAllTiers();
+    }
+
+    public function getRewards() {
+        try {
+            $rewardController = new RewardController();
+            return $rewardController->getAllRewards(false); // Get all rewards, including inactive ones
+        } catch (Exception $e) {
+            error_log("Error getting rewards: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function getPointsLedger($patientId) {
+        return $this->db->fetchAll(
+            "SELECT * FROM points_ledger WHERE UHID = ? ORDER BY created_at DESC",
+            [$patientId]
+        );
+    }
+
+    public function getRedemptions($patientId) {
+        $rewardController = new RewardController();
+        return $rewardController->getPatientRedemptions($patientId);
     }
 } 

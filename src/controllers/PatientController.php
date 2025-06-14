@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../includes/Database.php';
 require_once __DIR__ . '/BaseController.php';
+require_once __DIR__ . '/TierController.php';
 
 class PatientController extends BaseController {
     public function __construct() {
@@ -37,7 +38,7 @@ class PatientController extends BaseController {
         );
 
         $transactions = $this->db->fetchAll(
-            "SELECT * FROM transactions WHERE patient_id = ? ORDER BY transaction_date DESC LIMIT 10",
+            "SELECT * FROM transactions WHERE UHID = ? ORDER BY transaction_date DESC LIMIT 10",
             [$patientId]
         );
 
@@ -54,7 +55,7 @@ class PatientController extends BaseController {
 
         $identifier = $this->sanitizeInput($_POST['identifier']);
         $patient = $this->db->fetch(
-            "SELECT * FROM patients WHERE patient_id = ? OR phone_number = ?",
+            "SELECT * FROM patients WHERE UHID = ? OR phone_number = ?",
             [$identifier, $identifier]
         );
 
@@ -66,6 +67,9 @@ class PatientController extends BaseController {
 
         $_SESSION['user_id'] = $patient['id'];
         $_SESSION['is_admin'] = false;
+
+        // Update patient's tier
+        $this->updatePatientTier($patient['id']);
 
         $this->redirect('/patient/dashboard.php');
     }
@@ -85,12 +89,12 @@ class PatientController extends BaseController {
         $offset = ($page - 1) * $limit;
 
         $transactions = $this->db->fetchAll(
-            "SELECT * FROM transactions WHERE patient_id = ? ORDER BY transaction_date DESC LIMIT ? OFFSET ?",
+            "SELECT * FROM transactions WHERE UHID = ? ORDER BY transaction_date DESC LIMIT ? OFFSET ?",
             [$_SESSION['user_id'], $limit, $offset]
         );
 
         $total = $this->db->fetch(
-            "SELECT COUNT(*) as count FROM transactions WHERE patient_id = ?",
+            "SELECT COUNT(*) as count FROM transactions WHERE UHID = ?",
             [$_SESSION['user_id']]
         )['count'];
 
@@ -103,23 +107,27 @@ class PatientController extends BaseController {
     }
 
     public function getPatientDetails($patientId) {
-        return $this->db->fetch(
-            "SELECT * FROM patients WHERE id = ?",
+        $patient = $this->db->fetch(
+            "SELECT p.*, COALESCE(t.name, 'No Tier') as tier_name 
+            FROM patients p 
+            LEFT JOIN tiers t ON p.tier_id = t.id 
+            WHERE p.id = ?",
             [$patientId]
         );
+        return $patient;
     }
 
     public function getPatientTransactions($patientId) {
         return $this->db->fetchAll(
             "SELECT t.* 
             FROM (
-                SELECT id, patient_id, transaction_date, amount_paid, points_earned,
+                SELECT id, UHID, transaction_date, amount_paid, points_earned,
                        ROW_NUMBER() OVER (
                            PARTITION BY DATE(transaction_date), amount_paid, points_earned 
                            ORDER BY id DESC
                        ) as rn
                 FROM transactions 
-                WHERE patient_id = ?
+                WHERE UHID = ?
             ) t 
             WHERE t.rn = 1
             ORDER BY t.transaction_date DESC, t.id DESC 
@@ -134,13 +142,13 @@ class PatientController extends BaseController {
         $transactions = $this->db->fetchAll(
             "SELECT t.* 
             FROM (
-                SELECT id, patient_id, transaction_date, amount_paid, points_earned,
+                SELECT id, UHID, transaction_date, amount_paid, points_earned,
                        ROW_NUMBER() OVER (
                            PARTITION BY DATE(transaction_date), amount_paid, points_earned 
                            ORDER BY id DESC
                        ) as rn
                 FROM transactions 
-                WHERE patient_id = ?
+                WHERE UHID = ?
             ) t 
             WHERE t.rn = 1
             ORDER BY t.transaction_date DESC, t.id DESC 
@@ -159,7 +167,7 @@ class PatientController extends BaseController {
                                ORDER BY id DESC
                            ) as rn
                     FROM transactions 
-                    WHERE patient_id = ?
+                    WHERE UHID = ?
                 ) t 
                 WHERE t.rn = 1
             ) as unique_transactions",
@@ -174,6 +182,11 @@ class PatientController extends BaseController {
         ];
     }
 
+    public function updatePatientTier($patientId) {
+        $tierController = new TierController(false);
+        return $tierController->updatePatientTier($patientId);
+    }
+
     public function validatePatient($name, $phone) {
         // Debug log
         error_log("[PatientController] Validating patient - Name: $name, Phone: $phone");
@@ -186,6 +199,8 @@ class PatientController extends BaseController {
         
         if ($patient) {
             error_log("[PatientController] Found patient with exact match: " . print_r($patient, true));
+            // Update patient's tier
+            $this->updatePatientTier($patient['id']);
             return $patient;
         }
 
@@ -197,6 +212,8 @@ class PatientController extends BaseController {
         
         if ($patient) {
             error_log("[PatientController] Found patient with case-insensitive match: " . print_r($patient, true));
+            // Update patient's tier
+            $this->updatePatientTier($patient['id']);
         } else {
             error_log("[PatientController] No patient found with either match method");
         }
@@ -205,8 +222,12 @@ class PatientController extends BaseController {
     }
 
     public function logLogin($patientId, $method = 'regular') {
-        // Get patient details first
-        $patient = $this->getPatientDetails($patientId);
+        // Get patient details directly
+        $patient = $this->db->fetch(
+            "SELECT name, phone_number FROM patients WHERE id = ?",
+            [$patientId]
+        );
+        
         if (!$patient) {
             error_log("[PatientController] Failed to log login - Patient not found: $patientId");
             return false;
@@ -214,7 +235,7 @@ class PatientController extends BaseController {
 
         // Insert login log with patient details
         $result = $this->db->insert('login_logs', [
-            'patient_id' => $patientId,
+            'UHID' => $patientId,
             'patient_name' => $patient['name'],
             'phone_number' => $patient['phone_number'],
             'login_method' => $method,
@@ -247,7 +268,7 @@ class PatientController extends BaseController {
                 // Clean and validate data
                 $name = trim($row['name'] ?? '');
                 $phone = trim($row['phone_number'] ?? '');
-                $patientId = trim($row['patient_id'] ?? '');
+                $patientId = trim($row['UHID'] ?? '');
 
                 if (empty($name) || empty($phone) || empty($patientId)) {
                     $errors[] = "Missing required data for row: " . json_encode($row);
@@ -256,7 +277,7 @@ class PatientController extends BaseController {
 
                 // Check if patient exists
                 $existingPatient = $this->db->fetch(
-                    "SELECT * FROM patients WHERE patient_id = ? OR (name = ? AND phone_number = ?)",
+                    "SELECT * FROM patients WHERE UHID = ? OR (name = ? AND phone_number = ?)",
                     [$patientId, $name, $phone]
                 );
 
@@ -275,7 +296,7 @@ class PatientController extends BaseController {
                 } else {
                     // Insert new patient
                     $this->db->insert('patients', [
-                        'patient_id' => $patientId,
+                        'UHID' => $patientId,
                         'name' => $name,
                         'phone_number' => $phone,
                         'total_points' => 0
@@ -292,5 +313,87 @@ class PatientController extends BaseController {
             'updated' => $updated,
             'errors' => $errors
         ];
+    }
+
+    public function getAvailableRewards() {
+        return $this->db->fetchAll(
+            "SELECT * FROM rewards WHERE is_active = 1 ORDER BY points_cost ASC"
+        );
+    }
+
+    public function getPatientRedemptions($patientId) {
+        return $this->db->fetchAll(
+            "SELECT r.*, rw.name as reward_name 
+            FROM redemptions r 
+            JOIN rewards rw ON r.reward_id = rw.id 
+            WHERE r.UHID = ? 
+            ORDER BY r.created_at DESC 
+            LIMIT 10",
+            [$patientId]
+        );
+    }
+
+    public function redeemReward($patientId, $rewardId) {
+        // Start transaction
+        $this->db->getConnection()->beginTransaction();
+
+        try {
+            // Get reward details
+            $reward = $this->db->fetch(
+                "SELECT * FROM rewards WHERE id = ? AND is_active = 1",
+                [$rewardId]
+            );
+
+            if (!$reward) {
+                throw new Exception('Reward not found or inactive');
+            }
+
+            // Get patient details
+            $patient = $this->db->fetch(
+                "SELECT * FROM patients WHERE id = ?",
+                [$patientId]
+            );
+
+            if (!$patient) {
+                throw new Exception('Patient not found');
+            }
+
+            if ($patient['total_points'] < $reward['points_cost']) {
+                throw new Exception('Not enough points');
+            }
+
+            // Create redemption record
+            $redemptionId = $this->db->insert('redemptions', [
+                'UHID' => $patientId,
+                'reward_id' => $rewardId,
+                'points_spent' => $reward['points_cost'],
+                'status' => 'pending'
+            ]);
+
+            // Update patient points
+            $this->db->execute(
+                "UPDATE patients SET total_points = total_points - ? WHERE id = ?",
+                [$reward['points_cost'], $patientId]
+            );
+
+            // Add to points ledger
+            $this->db->insert('points_ledger', [
+                'UHID' => $patientId,
+                'points' => -$reward['points_cost'],
+                'type' => 'redeem',
+                'reference_id' => $redemptionId,
+                'reference_type' => 'redemption',
+                'description' => "Points spent on reward: " . $reward['name']
+            ]);
+
+            // Update patient's tier
+            $this->updatePatientTier($patientId);
+
+            $this->db->getConnection()->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->db->getConnection()->rollBack();
+            throw $e;
+        }
     }
 } 

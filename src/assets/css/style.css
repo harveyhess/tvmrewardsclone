@@ -338,4 +338,235 @@ main {
 .login-option p {
     color: #666;
     margin-bottom: 15px;
+}
+
+/* Tier and Reward styles */
+.tiers-section,
+.rewards-section {
+    margin-bottom: 30px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.tiers-table,
+.rewards-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.tiers-table th,
+.tiers-table td,
+.rewards-table th,
+.rewards-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.tiers-table th,
+.rewards-table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+.edit-tier,
+.edit-reward,
+.delete-tier,
+.delete-reward {
+    padding: 6px 12px;
+    margin: 0 5px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.edit-tier,
+.edit-reward {
+    background-color: #28a745;
+    color: white;
+}
+
+.delete-tier,
+.delete-reward {
+    background-color: #dc3545;
+    color: white;
+}
+
+.edit-tier:hover,
+.edit-reward:hover {
+    background-color: #218838;
+}
+
+.delete-tier:hover,
+.delete-reward:hover {
+    background-color: #c82333;
+}
+
+/* Points and Tier display styles */
+.points-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.points-card {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 5px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.points-card h3 {
+    color: #666;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+.points-card .points {
+    font-size: 32px;
+    color: #007bff;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.points-card .tier {
+    font-size: 24px;
+    color: #28a745;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+/* Rewards grid styles */
+.rewards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.reward-card {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.reward-card h3 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.reward-card .description {
+    color: #666;
+    margin-bottom: 15px;
+    min-height: 60px;
+}
+
+.reward-card .points-cost {
+    color: #007bff;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.redeem-button {
+    padding: 8px 16px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+}
+
+.redeem-button:hover {
+    background-color: #218838;
+}
+
+.redeem-button.disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+/* Status styles */
+.status {
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.status.active {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status.inactive {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.status.pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status.completed {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+/* Rewards table styles */
+.rewards-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.rewards-table th,
+.rewards-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.rewards-table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+.rewards-table .edit-reward,
+.rewards-table .delete-reward {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-right: 5px;
+}
+
+.rewards-table .edit-reward {
+    background-color: #28a745;
+    color: white;
+}
+
+.rewards-table .delete-reward {
+    background-color: #dc3545;
+    color: white;
+}
+
+.rewards-table .edit-reward:hover {
+    background-color: #218838;
+}
+
+.rewards-table .delete-reward:hover {
+    background-color: #c82333;
 } 
