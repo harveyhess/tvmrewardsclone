@@ -10,13 +10,13 @@ define('SITE_NAME', 'Patient Loyalty Rewards System');
 define('SITE_URL', 'http://localhost/Veteran');
 define('UPLOAD_DIR', __DIR__ . '/../uploads');
 define('MAX_FILE_SIZE', 5 * 1024 * 1024); // 5MB
-define('ALLOWED_FILE_TYPES', ['csv']);
+define('ALLOWED_FILE_TYPES', ['csv,xlsx']);
 
 // Server configuration
 define('PORT', 2500); // Development server port
 
 // Session configuration
-define('SESSION_NAME', 'patient_loyalty_session');
+define('SESSION_NAME', 'Veteran_session');
 define('SESSION_LIFETIME', 3600); // 1 hour
 
 // Points configuration

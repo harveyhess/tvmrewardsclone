@@ -121,9 +121,9 @@ class PatientController extends BaseController {
         return $this->db->fetchAll(
             "SELECT t.* 
             FROM (
-                SELECT id, UHID, transaction_date, amount_paid, points_earned,
+                SELECT id, UHID, transaction_date,Amount,ReffNo, points_earned,
                        ROW_NUMBER() OVER (
-                           PARTITION BY DATE(transaction_date), amount_paid, points_earned 
+                           PARTITION BY DATE(transaction_date),Amount, ReffNo,points_earned 
                            ORDER BY id DESC
                        ) as rn
                 FROM transactions 
@@ -142,9 +142,9 @@ class PatientController extends BaseController {
         $transactions = $this->db->fetchAll(
             "SELECT t.* 
             FROM (
-                SELECT id, UHID, transaction_date, amount_paid, points_earned,
+                SELECT id, UHID, transaction_date,Amount, points_earned,
                        ROW_NUMBER() OVER (
-                           PARTITION BY DATE(transaction_date), amount_paid, points_earned 
+                           PARTITION BY DATE(transaction_date),Amount, ReffNo,points_earned 
                            ORDER BY id DESC
                        ) as rn
                 FROM transactions 
@@ -163,7 +163,7 @@ class PatientController extends BaseController {
                 FROM (
                     SELECT id,
                            ROW_NUMBER() OVER (
-                               PARTITION BY DATE(transaction_date), amount_paid, points_earned 
+                               PARTITION BY DATE(transaction_date),Amount,ReffNo, points_earned 
                                ORDER BY id DESC
                            ) as rn
                     FROM transactions 

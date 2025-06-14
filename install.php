@@ -47,7 +47,8 @@ try {
         "CREATE TABLE IF NOT EXISTS transactions (
             id INT AUTO_INCREMENT PRIMARY KEY,
             UHID INT NOT NULL,
-            amount_paid DECIMAL(10,2) NOT NULL,
+            ReffNo VARCHAR(255) NOT NULL,
+            Amount DECIMAL(10,2) NOT NULL,
             points_earned INT NOT NULL,
             transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (UHID) REFERENCES patients(id)
