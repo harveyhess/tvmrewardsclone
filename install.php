@@ -5,10 +5,6 @@ require_once 'includes/Database.php';
 try {
     // Use the Database class for connection (supports DATABASE_URL)
     $pdo = Database::getInstance()->getConnection();
-    
-    // Create database if it doesn't exist
-    $pdo->exec("CREATE DATABASE IF NOT EXISTS " . DB_NAME);
-    $pdo->exec("USE " . DB_NAME);
 
     // Create tables
     $tables = [
