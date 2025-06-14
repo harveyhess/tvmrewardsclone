@@ -39,8 +39,8 @@ error_log("Session data: " . print_r($_SESSION, true));
                 <h2>Upload Patient Data</h2>
                 <form method="POST" action="process_upload.php" enctype="multipart/form-data" id="uploadForm">
                     <div class="form-group">
-                        <label for="csv_file">Select CSV File:</label>
-                        <input type="file" id="csv_file" name="csv_file" accept=".csv" required>
+                        <label for="csv_file">Select CSV or Excel File:</label>
+                        <input type="file" id="csv_file" name="csv_file" accept=".csv,.xlsx" required>
                         <div id="fileError" class="error" style="display: none;"></div>
                     </div>
                     <div class="form-group">
@@ -53,15 +53,16 @@ error_log("Session data: " . print_r($_SESSION, true));
             </section>
 
             <section class="instructions">
-                <h3>CSV Format Requirements</h3>
-                <p>The CSV file should contain the following columns:</p>
+                <h3>CSV/Excel Format Requirements</h3>
+                <p>The file must contain columns for:</p>
                 <ul>
-                    <li>PatientID (required)</li>
-                    <li>Name (required)</li>
-                    <li>PhoneNumber (required)</li>
-                    <li>AmountPaid (required, numeric)</li>
+                    <li>UHID (or PatientID, Unique ID, etc.)</li>
+                    <li>Name (or Patient Name, Full Name, etc.)</li>
+                    <li>PhoneNumber (or Patient Number, Contact, etc.)</li>
+                    <li>Amount (or Amount Paid, Payment, etc.)</li>
+                    <li>ReffNo (or TransactionID, RefNo, Reference, etc.)</li>
                 </ul>
-                <p>Additional columns will be ignored.</p>
+                <p>Column order and case do not matter. Additional columns will be ignored. If any required column is missing, you will see a clear error message listing the headers found in your file.</p>
             </section>
 
             <a href="cron/process_transactions.php" class="button">Run Cron Job</a>
@@ -92,14 +93,14 @@ error_log("Session data: " . print_r($_SESSION, true));
             
             // Validate file
             if (!fileInput.files.length) {
-                fileError.textContent = 'Please select a CSV file';
+                fileError.textContent = 'Please select a CSV or Excel file';
                 fileError.style.display = 'block';
                 return;
             }
 
             const file = fileInput.files[0];
-            if (!file.name.toLowerCase().endsWith('.csv')) {
-                fileError.textContent = 'Only CSV files are allowed';
+            if (!file.name.toLowerCase().endsWith('.csv') && !file.name.toLowerCase().endsWith('.xlsx')) {
+                fileError.textContent = 'Only CSV or Excel (.xlsx) files are allowed';
                 fileError.style.display = 'block';
                 return;
             }
@@ -114,4 +115,4 @@ error_log("Session data: " . print_r($_SESSION, true));
     });
     </script>
 </body>
-</html> 
+</html>

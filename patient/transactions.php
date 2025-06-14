@@ -75,7 +75,7 @@ $totalPages = $result['totalPages'];
                             <?php foreach ($transactions as $transaction): ?>
                             <tr>
                                 <td><?php echo date('Y-m-d', strtotime($transaction['transaction_date'])); ?></td>
-                                <td>KES <?php echo number_format($transaction['amount_paid'], 2); ?></td>
+                                <td>KES <?php echo number_format($transaction['Amount'], 2); ?></td>
                                 <td><?php echo $transaction['points_earned']; ?></td>
                             </tr>
                             <?php endforeach; ?>

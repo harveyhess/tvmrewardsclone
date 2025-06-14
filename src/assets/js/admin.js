@@ -162,10 +162,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Edit points button click
     document.querySelectorAll('.edit-points').forEach(button => {
         button.addEventListener('click', function() {
-            const patientId = this.dataset.patientId;
+            const UHID = this.dataset.UHID;
             const points = this.parentElement.querySelector('.points').textContent;
             
-            document.getElementById('patientId').value = patientId;
+            document.getElementById('UHID').value = UHID;
             document.getElementById('points').value = points;
             pointsModal.style.display = 'block';
         });
@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // QR code button click
     document.querySelectorAll('.qr-code').forEach(button => {
         button.addEventListener('click', function() {
-            const patientId = this.dataset.patientId;
+            const UHID = this.dataset.UHID;
             const qrModal = document.getElementById('qrModal');
             const qrCode = document.getElementById('qrCode');
             
@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function() {
             qrCode.innerHTML = '<p>Generating QR code...</p>';
             qrModal.style.display = 'block';
             
-            fetch(`../../admin/generate_qr.php?UHID=${patientId}`)
+            fetch(`../../admin/generate_qr.php?UHID=${UHID}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.qr_code_url) {
@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                      style="max-width: 300px; margin: 20px auto;"
                                      onerror="this.onerror=null; this.src='https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data.url)}'">
                                 <div class="qr-info">
-                                    <p><strong>Patient ID:</strong> ${data.UHID}</p>
+                                    <p><strong>UHID:</strong> ${data.UHID}</p>
                                     <p><strong>Name:</strong> ${data.name}</p>
                                     <p><strong>Phone:</strong> ${data.phone}</p>
                                     <p><strong>Login URL:</strong></p>
@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     // Update points in the table
-                    const pointsElement = document.querySelector(`[data-patient-id="${formData.get('UHID')}"]`)
+                    const pointsElement = document.querySelector(`[data-UHID="${formData.get('UHID')}"]`)
                         .parentElement.querySelector('.points');
                     pointsElement.textContent = formData.get('points');
                     

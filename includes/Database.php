@@ -5,12 +5,35 @@ class Database {
 
     private function __construct() {
         try {
-            $this->connection = new PDO(
-                "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME,
-                DB_USER,
-                DB_PASS,
-                [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-            );
+            // Support DATABASE_URL (e.g., mysql://user:pass@host:port/dbname)
+            $databaseUrl = getenv('DATABASE_URL');
+            if ($databaseUrl) {
+                $parts = parse_url($databaseUrl);
+                $host = $parts['host'];
+                $port = isset($parts['port']) ? $parts['port'] : 3306;
+                $user = $parts['user'];
+                $pass = $parts['pass'];
+                $dbname = ltrim($parts['path'], '/');
+                $dsn = "mysql:host=$host;port=$port;dbname=$dbname";
+                $this->connection = new PDO(
+                    $dsn,
+                    $user,
+                    $pass,
+                    [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+                );
+            } else {
+                // Fallback to legacy env vars, but show a clear error if not set
+                if (!defined('DB_HOST') || !defined('DB_PORT') || !defined('DB_USER') || !defined('DB_PASS') || !defined('DB_NAME')) {
+                    die("Database connection error: No DATABASE_URL set and legacy DB_* constants are not defined. Please set DATABASE_URL in your .env file.");
+                }
+                $dsn = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME;
+                $this->connection = new PDO(
+                    $dsn,
+                    DB_USER,
+                    DB_PASS,
+                    [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+                );
+            }
         } catch (PDOException $e) {
             die("Connection failed: " . $e->getMessage());
         }
@@ -78,4 +101,4 @@ class Database {
         $params = array_merge(array_values($data), $whereParams);
         return $this->query($sql, $params);
     }
-} 
+}

@@ -172,7 +172,7 @@ $recentSyncs = $db->fetchAll(
                                 <label for="csv_file" class="form-label">Select CSV File</label>
                                 <input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv" required>
                                 <div class="form-text">
-                                    The CSV file should have the following columns: patientid, amountpaid, dateofvisit
+                                    The CSV file should have the following columns: UHID, amount, dateofvisit
                                 </div>
                             </div>
                             <button type="submit" class="btn btn-primary">Upload</button>

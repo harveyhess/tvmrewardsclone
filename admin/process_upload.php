@@ -36,13 +36,13 @@ try {
     
     // Validate file type
     $fileType = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-    if ($fileType !== 'csv') {
-        throw new Exception('Only CSV files are allowed');
+    if (!in_array($fileType, ['csv', 'xlsx'])) {
+        throw new Exception('Only CSV or Excel (.xlsx) files are allowed');
     }
 
-    // Process CSV file
+    // Process CSV or Excel file
     $csvHandler = new CsvHandler();
-    $result = $csvHandler->processCsv($file);
+    $result = $csvHandler->processFile($file);
 
     // Set success message
     $_SESSION['flash_message'] = [
@@ -57,7 +57,7 @@ try {
 
     // Log any errors
     if (!empty($result['errors'])) {
-        error_log("CSV Import Errors: " . print_r($result['errors'], true));
+        error_log("CSV/Excel Import Errors: " . print_r($result['errors'], true));
     }
 
 } catch (Exception $e) {
@@ -74,4 +74,4 @@ ob_end_clean();
 // Redirect
 header('Location: upload.php');
 exit;
-?> 
+?>

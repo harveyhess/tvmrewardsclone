@@ -14,7 +14,7 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['is_admin'])) {
 
 if (!isset($_GET['UHID'])) {
     header('Content-Type: application/json');
-    echo json_encode(['error' => 'Patient ID is required']);
+    echo json_encode(['error' => 'UHID is required']);
     exit;
 }
 

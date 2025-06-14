@@ -14,6 +14,11 @@ class TierController extends BaseController {
     }
 
     public function createTier($name, $minPoints, $maxPoints = null, $description = '') {
+        // Prevent duplicate tier names
+        $existing = $this->db->fetch("SELECT id FROM tiers WHERE name = ?", [$name]);
+        if ($existing) {
+            throw new Exception("Tier with this name already exists.");
+        }
         try {
             return $this->db->insert('tiers', [
                 'name' => $name,
@@ -65,11 +70,11 @@ class TierController extends BaseController {
         );
     }
 
-    public function updatePatientTier($patientId) {
+    public function updatePatientTier($UHID) {
         try {
             $patient = $this->db->fetch(
                 "SELECT total_points FROM patients WHERE id = ?",
-                [$patientId]
+                [$UHID]
             );
 
             if (!$patient) {
@@ -81,7 +86,7 @@ class TierController extends BaseController {
             if ($tier) {
                 $this->db->execute(
                     "UPDATE patients SET tier_id = ? WHERE id = ?",
-                    [$tier['id'], $patientId]
+                    [$tier['id'], $UHID]
                 );
                 return true;
             }
@@ -91,4 +96,4 @@ class TierController extends BaseController {
             return false;
         }
     }
-} 
+}

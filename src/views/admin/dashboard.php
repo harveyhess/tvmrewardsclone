@@ -37,9 +37,10 @@
             <section class="actions">
                 <h2>Quick Actions</h2>
                 <div class="action-buttons">
-                    <a href="upload.php" class="button">Upload CSV</a>
+                    <a href="upload.php" class="button">Upload CSV/Excel</a>
                     <a href="patients.php" class="button">View Patients</a>
                     <a href="export.php" class="button">Export Data</a>
+                    <a href="register_patient.php" class="button">Register New Patient</a>
                 </div>
             </section>
 
@@ -56,4 +57,4 @@
 
     <script src="../assets/js/admin.js"></script>
 </body>
-</html> 
+</html>

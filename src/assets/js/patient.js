@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 const row = document.createElement('tr');
                                 row.innerHTML = `
                                     <td>${new Date(transaction.transaction_date).toLocaleString()}</td>
-                                    <td>KES ${parseFloat(transaction.amount_paid).toFixed(2)}</td>
+                                    <td>KES ${parseFloat(transaction.Amount).toFixed(2)}</td>
                                     <td>${transaction.points_earned}</td>
                                 `;
                                 tbody.appendChild(row);

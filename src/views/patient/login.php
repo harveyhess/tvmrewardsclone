@@ -14,7 +14,7 @@
         <?php endif; ?>
         <form method="POST" action="">
             <div class="form-group">
-                <label for="identifier">Patient ID or Phone Number:</label>
+                <label for="identifier">UHID or Phone Number:</label>
                 <input type="text" id="identifier" name="identifier" required>
             </div>
             <button type="submit" class="button">Login</button>

@@ -61,14 +61,14 @@ class RewardController extends BaseController {
         return $this->db->fetch("SELECT * FROM rewards WHERE id = ?", [$id]);
     }
 
-    public function redeemReward($patientId, $rewardId) {
+    public function redeemReward($UHID, $rewardId) {
         try {
             $this->db->getConnection()->beginTransaction();
 
             // Get patient and reward details
             $patient = $this->db->fetch(
                 "SELECT total_points FROM patients WHERE id = ?",
-                [$patientId]
+                [$UHID]
             );
             $reward = $this->db->fetch(
                 "SELECT * FROM rewards WHERE id = ? AND is_active = 1",
@@ -85,7 +85,7 @@ class RewardController extends BaseController {
 
             // Create redemption record
             $redemptionId = $this->db->insert('redemptions', [
-                'UHID' => $patientId,
+                'UHID' => $UHID,
                 'reward_id' => $rewardId,
                 'points_spent' => $reward['points_cost'],
                 'status' => 'pending'
@@ -94,12 +94,12 @@ class RewardController extends BaseController {
             // Update patient points
             $this->db->execute(
                 "UPDATE patients SET total_points = total_points - ? WHERE id = ?",
-                [$reward['points_cost'], $patientId]
+                [$reward['points_cost'], $UHID]
             );
 
             // Add to points ledger
             $this->db->insert('points_ledger', [
-                'UHID' => $patientId,
+                'UHID' => $UHID,
                 'points' => -$reward['points_cost'],
                 'type' => 'redeem',
                 'reference_id' => $redemptionId,
@@ -109,7 +109,7 @@ class RewardController extends BaseController {
 
             // Update patient's tier
             $tierController = new TierController(false);
-            $tierController->updatePatientTier($patientId);
+            $tierController->updatePatientTier($UHID);
 
             $this->db->getConnection()->commit();
             return $redemptionId;
@@ -182,14 +182,14 @@ class RewardController extends BaseController {
         }
     }
 
-    public function getPatientRedemptions($patientId) {
+    public function getPatientRedemptions($UHID) {
         return $this->db->fetchAll(
             "SELECT r.*, rw.name as reward_name, rw.description as reward_description 
             FROM redemptions r 
             JOIN rewards rw ON r.reward_id = rw.id 
             WHERE r.UHID = ? 
             ORDER BY r.created_at DESC",
-            [$patientId]
+            [$UHID]
         );
     }
 } 

@@ -71,16 +71,16 @@ A full-stack web application for managing patient loyalty rewards in a hospital 
 ### Patient Access
 1. Patients can access their dashboard via:
    - QR code scan
-   - Login with Patient ID or Phone Number
+   - Login with UHID or Phone Number
 2. View points and transaction history
 
 ## CSV Import Format
 
 The system expects CSV files with the following columns:
-- PatientID (required)
+- UHID (required)
 - Name (required)
 - PhoneNumber (required)
-- AmountPaid (required, numeric)
+- amount (required, numeric)
 
 Additional columns will be ignored.
 

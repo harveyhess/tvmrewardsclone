@@ -22,6 +22,7 @@
             <section class="patients-section">
                 <div class="actions">
                     <a href="../../admin/export.php" class="button">Export to CSV</a>
+                    <a href="../../admin/register_patient.php" class="button">Register New Patient</a>
                 </div>
 
                 <?php if (empty($patients)): ?>
@@ -30,7 +31,7 @@
                     <table class="patients-table">
                         <thead>
                             <tr>
-                                <th>Patient ID</th>
+                                <th>UHID</th>
                                 <th>Name</th>
                                 <th>Phone Number</th>
                                 <th>Total Points</th>
@@ -45,10 +46,10 @@
                                     <td><?php echo htmlspecialchars($patient['phone_number']); ?></td>
                                     <td>
                                         <span class="points"><?php echo $patient['total_points']; ?></span>
-                                        <button class="edit-points" data-patient-id="<?php echo $patient['id']; ?>">Edit</button>
+                                        <button class="edit-points" data-UHID="<?php echo $patient['id']; ?>">Edit</button>
                                     </td>
                                     <td>
-                                        <button class="qr-code" data-patient-id="<?php echo $patient['id']; ?>">QR Code</button>
+                                        <button class="qr-code" data-UHID="<?php echo $patient['id']; ?>">QR Code</button>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -73,7 +74,7 @@
                 <div class="modal-content">
                     <h2>Edit Points</h2>
                     <form id="pointsForm">
-                        <input type="hidden" id="patientId" name="UHID">
+                        <input type="hidden" id="UHID" name="UHID">
                         <div class="form-group">
                             <label for="points">Points:</label>
                             <input type="number" id="points" name="points" required min="0">
@@ -97,4 +98,4 @@
 
     <script src="../../src/assets/js/admin.js"></script>
 </body>
-</html> 
+</html>

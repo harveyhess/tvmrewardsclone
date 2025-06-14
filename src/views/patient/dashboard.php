@@ -21,7 +21,7 @@
             <section class="patient-info">
                 <div class="info-card">
                     <h3>Patient Information</h3>
-                    <p><strong>Patient ID:</strong> <?php echo htmlspecialchars($patient['UHID']); ?></p>
+                    <p><strong>UHID:</strong> <?php echo htmlspecialchars($patient['UHID']); ?></p>
                     <p><strong>Phone Number:</strong> <?php echo htmlspecialchars($patient['phone_number']); ?></p>
                     <p><strong>Total Points:</strong> <span class="points"><?php echo $patient['total_points']; ?></span></p>
                 </div>
@@ -41,7 +41,7 @@
                         <?php foreach ($transactions as $transaction): ?>
                             <tr>
                                 <td><?php echo date('Y-m-d H:i', strtotime($transaction['transaction_date'])); ?></td>
-                                <td>KES <?php echo number_format($transaction['amount_paid'], 2); ?></td>
+                                <td>KES <?php echo number_format($transaction['Amount'], 2); ?></td>
                                 <td><?php echo $transaction['points_earned']; ?></td>
                             </tr>
                         <?php endforeach; ?>

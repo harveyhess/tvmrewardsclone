@@ -71,7 +71,7 @@ $redemptions = $controller->getPatientRedemptions($_SESSION['user_id']);
                     <p class="tier"><?php echo htmlspecialchars($patient['tier_name'] ?? 'No Tier'); ?></p>
                 </div>
                 <div class="points-card">
-                    <h3>Patient ID</h3>
+                    <h3>UHID</h3>
                     <p><?php echo htmlspecialchars($patient['UHID']); ?></p>
                 </div>
             </section>
@@ -119,7 +119,7 @@ $redemptions = $controller->getPatientRedemptions($_SESSION['user_id']);
                             <?php foreach ($transactions as $transaction): ?>
                             <tr>
                                 <td><?php echo date('Y-m-d', strtotime($transaction['transaction_date'])); ?></td>
-                                <td>KES <?php echo number_format($transaction['amount_paid'], 2); ?></td>
+                                <td>KES <?php echo number_format($transaction['Amount'], 2); ?></td>
                                 <td><?php echo $transaction['points_earned']; ?></td>
                             </tr>
                             <?php endforeach; ?>

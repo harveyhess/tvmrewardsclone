@@ -76,10 +76,10 @@ class AdminController extends BaseController {
                 continue;
             }
 
-            $patientId = trim($data[0]);
+            $UHID = trim($data[0]);
             $name = trim($data[1]);
             $phone = trim($data[2]);
-            $amountPaid = (float)trim($data[3]);
+            $amount = (float)trim($data[3]);
 
             try {
                 // Start transaction
@@ -88,34 +88,34 @@ class AdminController extends BaseController {
                 // Insert or update patient
                 $patient = $this->db->fetch(
                     "SELECT id FROM patients WHERE UHID = ?",
-                    [$patientId]
+                    [$UHID]
                 );
 
                 if ($patient) {
-                    $patientId = $patient['id'];
-                    error_log("Updating existing patient: " . $patientId);
+                    $UHID = $patient['id'];
+                    error_log("Updating existing patient: " . $UHID);
                 } else {
-                    error_log("Creating new patient: " . $patientId);
+                    error_log("Creating new patient: " . $UHID);
                     $this->db->execute(
                         "INSERT INTO patients (UHID, name, phone_number) VALUES (?, ?, ?)",
-                        [$patientId, $name, $phone]
+                        [$UHID, $name, $phone]
                     );
-                    $patientId = $this->db->lastInsertId();
+                    $UHID = $this->db->lastInsertId();
                 }
 
                 // Calculate points based on amount paid
-                $points = floor($amountPaid / $pointsRate);
-                error_log("Calculated points: " . $points . " for amount: " . $amountPaid);
+                $points = floor($amount / $pointsRate);
+                error_log("Calculated points: " . $points . " for amount: " . $amount);
 
                 // Add points to patient
-                $this->updatePoints($patientId, $points);
+                $this->updatePoints($UHID, $points);
 
                 $this->db->getPdo()->commit();
                 $successCount++;
             } catch (Exception $e) {
                 $this->db->getPdo()->rollBack();
                 $errorCount++;
-                $errors[] = "Error processing patient ID: $patientId - " . $e->getMessage();
+                $errors[] = "Error processing UHID: $UHID - " . $e->getMessage();
                 error_log("Error processing patient: " . $e->getMessage());
             }
         }
@@ -154,11 +154,11 @@ class AdminController extends BaseController {
             return $this->jsonResponse(['error' => 'Invalid request method'], 400);
         }
 
-        $patientId = $this->sanitizeInput($_POST['UHID']);
+        $UHID = $this->sanitizeInput($_POST['UHID']);
         $points = (int)$_POST['points'];
 
         try {
-            $this->updatePoints($patientId, $points);
+            $this->updatePoints($UHID, $points);
             return $this->jsonResponse(['success' => true]);
         } catch (Exception $e) {
             return $this->jsonResponse(['error' => $e->getMessage()], 500);
@@ -194,7 +194,7 @@ class AdminController extends BaseController {
         header('Content-Disposition: attachment; filename="patients.csv"');
 
         $output = fopen('php://output', 'w');
-        fputcsv($output, ['Patient ID', 'Name', 'Phone Number', 'Total Points']);
+        fputcsv($output, ['UHID', 'Name', 'Phone Number', 'Total Points']);
 
         foreach ($patients as $patient) {
             fputcsv($output, $patient);
@@ -204,8 +204,8 @@ class AdminController extends BaseController {
         exit;
     }
 
-    public function generateQrCode($patientId) {
-        $patient = $this->getPatientDetails($patientId);
+    public function generateQrCode($UHID) {
+        $patient = $this->getPatientDetails($UHID);
         if (!$patient) {
             return false;
         }
@@ -215,7 +215,7 @@ class AdminController extends BaseController {
             $token = bin2hex(random_bytes(32)); // Using 32 bytes for better security
             $this->db->execute(
                 "UPDATE patients SET qr_token = ? WHERE id = ?",
-                [$token, $patientId]
+                [$token, $UHID]
             );
             $patient['qr_token'] = $token;
         }
@@ -288,27 +288,28 @@ class AdminController extends BaseController {
         );
     }
 
-    public function updatePoints($patientId, $points) {
+    public function updatePoints($UHID, $points) {
         try {
             $this->db->getConnection()->beginTransaction();
 
         // First update the patient's total points
         $this->db->execute(
             "UPDATE patients SET total_points = total_points + ? WHERE id = ?",
-            [$points, $patientId]
+            [$points, $UHID]
         );
 
             // If points are being added, create a transaction record and points ledger entry
         if ($points > 0) {
                 $transactionId = $this->db->insert('transactions', [
-                    'UHID' => $patientId,
-                    'amount_paid' => $points * 100, // Assuming 1 point per 100 KES
+                    'UHID' => $UHID,
+                    'Amount' => $points * 100, // Assuming 1 point per 100 KES
+                    'ReffNo' => '', // No reference number in manual admin points add
                     'points_earned' => $points
                 ]);
 
                 // Add to points ledger
                 $this->db->insert('points_ledger', [
-                    'UHID' => $patientId,
+                    'UHID' => $UHID,
                     'points' => $points,
                     'type' => 'earn',
                     'reference_id' => $transactionId,
@@ -319,7 +320,7 @@ class AdminController extends BaseController {
 
             // Update patient's tier
             $tierController = new TierController();
-            $tierController->updatePatientTier($patientId);
+            $tierController->updatePatientTier($UHID);
 
             $this->db->getConnection()->commit();
             return true;
@@ -345,15 +346,15 @@ class AdminController extends BaseController {
         }
     }
 
-    public function getPointsLedger($patientId) {
+    public function getPointsLedger($UHID) {
         return $this->db->fetchAll(
             "SELECT * FROM points_ledger WHERE UHID = ? ORDER BY created_at DESC",
-            [$patientId]
+            [$UHID]
         );
     }
 
-    public function getRedemptions($patientId) {
+    public function getRedemptions($UHID) {
         $rewardController = new RewardController();
-        return $rewardController->getPatientRedemptions($patientId);
+        return $rewardController->getPatientRedemptions($UHID);
     }
-} 
+}
