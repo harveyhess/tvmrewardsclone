@@ -6,7 +6,7 @@ class Database {
     private function __construct() {
         try {
             // Support DATABASE_URL (e.g., mysql://user:pass@host:port/dbname)
-            $databaseUrl = getenv('DATABASE_URL');
+            $databaseUrl = defined('DATABASE_URL') ? constant('DATABASE_URL') : getenv('DATABASE_URL');
             if ($databaseUrl) {
                 $parts = parse_url($databaseUrl);
                 $host = $parts['host'];
