@@ -19,6 +19,7 @@ services:
     volumes:
       - .:/var/www/html
     restart: unless-stopped
+    command: ["./start.sh"]
   db:
     image: mysql:8.0
     environment:
