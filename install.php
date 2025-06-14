@@ -1,11 +1,12 @@
 <?php
 require_once 'config/config.php';
+require_once 'includes/Database.php';
 
 try {
-    // Create database if it doesn't exist
-    $pdo = new PDO("mysql:host=" . DB_HOST, DB_USER, DB_PASS);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // Use the Database class for connection (supports DATABASE_URL)
+    $pdo = Database::getInstance()->getConnection();
     
+    // Create database if it doesn't exist
     $pdo->exec("CREATE DATABASE IF NOT EXISTS " . DB_NAME);
     $pdo->exec("USE " . DB_NAME);
 
@@ -32,8 +33,6 @@ try {
         "CREATE TABLE IF NOT EXISTS patients (
             id INT AUTO_INCREMENT PRIMARY KEY,
             UHID VARCHAR(50) UNIQUE NOT NULL, /*UHID CHANGED ,Amount,DATE,ReffNo(transaction id)*/
-
-
             name VARCHAR(100) NOT NULL,/*PName*/
             phone_number VARCHAR(20) NOT NULL,
             total_points INT DEFAULT 0,
@@ -193,4 +192,4 @@ try {
 
 } catch (PDOException $e) {
     die("Installation failed: " . $e->getMessage());
-} 
+}
