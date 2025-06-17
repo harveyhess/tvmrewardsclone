@@ -18,6 +18,11 @@ COPY ./start.sh ./start.sh
 # Make start.sh executable
 RUN chmod +x ./start.sh
 
+# Install and enable zip extension
+RUN apt-get update && apt-get install -y libzip-dev \
+    && docker-php-ext-configure zip \
+    && docker-php-ext-install zip
+
 # Set working directory and start script
 WORKDIR /var/www/html
 CMD ["./start.sh"]
