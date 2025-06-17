@@ -39,8 +39,12 @@ define('ALLOWED_FILE_TYPES', ['csv','xlsx']);
 // PORT is loaded from .env
 
 
-// Fallback if PORT not set
-if (!defined('PORT')) define('PORT', 8000);
+// Fallback if PORT not set Server configuration
+if (!defined('PORT')) {
+    $envPort = getenv('PORT');
+    define('PORT', $envPort ?: 8000); // fallback
+}
+
 
 
 // Session configuration
