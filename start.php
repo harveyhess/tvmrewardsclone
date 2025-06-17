@@ -22,7 +22,7 @@ function runInstallation() {
 // Function to start PHP development server
 function startServer($port) {
     $command = sprintf(
-        'php -S localhost:%d router.php',
+        'php -S 0.0.0.0:%d router.php',
         $port
     );
     
