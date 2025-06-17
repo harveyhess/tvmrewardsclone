@@ -9,11 +9,24 @@ if (file_exists(__DIR__ . '/../.env')) {
     }
 }
 
-/* Database configuration
-define('DB_HOST', defined('DB_HOST') ? DB_HOST : '127.0.0.1');
-define('DB_USER', defined('DB_USER') ? DB_USER : 'root');
-define('DB_PASS', defined('DB_PASS') ? DB_PASS : '');
-define('DB_NAME', defined('DB_NAME') ? DB_NAME : 'Veteran'); */
+// Parse DATABASE_URL if present and define DB_* constants
+if (defined('DATABASE_URL')) {
+    $url = getenv('DATABASE_URL') ?: DATABASE_URL;
+    $parts = parse_url($url);
+    if ($parts !== false) {
+        if (!defined('DB_HOST') && isset($parts['host'])) define('DB_HOST', $parts['host']);
+        if (!defined('DB_USER') && isset($parts['user'])) define('DB_USER', $parts['user']);
+        if (!defined('DB_PASS') && isset($parts['pass'])) define('DB_PASS', $parts['pass']);
+        if (!defined('DB_NAME') && isset($parts['path'])) define('DB_NAME', ltrim($parts['path'], '/'));
+        if (!defined('DB_PORT') && isset($parts['port'])) define('DB_PORT', $parts['port']);
+    }
+}
+
+// Fallbacks if not set
+if (!defined('DB_HOST')) define('DB_HOST', '127.0.0.1');
+if (!defined('DB_USER')) define('DB_USER', 'root');
+if (!defined('DB_PASS')) define('DB_PASS', '');
+if (!defined('DB_NAME')) define('DB_NAME', 'Veteran');
 
 // Application configuration
 define('SITE_NAME', 'Patient Loyalty Rewards System');
