@@ -39,13 +39,15 @@ if (!isPortAvailable(PORT)) {
     exit(1);
 }
 
+
+
 // Check if database exists
 try {
-    $pdo = new PDO(
-        "mysql:host=" . DB_HOST,
-        DB_USER,
-        DB_PASS
-    );
+   $pdo = new PDO(
+    "mysql:host=" . DB_HOST . ";port=" . DB_PORT,
+    DB_USER,
+    DB_PASS
+);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
     // Check if database exists
