@@ -38,6 +38,11 @@ define('ALLOWED_FILE_TYPES', ['csv','xlsx']);
 // Server configuration
 // PORT is loaded from .env
 
+
+// Fallback if PORT not set
+if (!defined('PORT')) define('PORT', 8000);
+
+
 // Session configuration
 // SESSION_NAME and SESSION_LIFETIME are loaded from .env
 
