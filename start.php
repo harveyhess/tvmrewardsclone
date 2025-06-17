@@ -1,6 +1,4 @@
 <?php
-define('PORT', getenv('PORT') ?: 8080);
-
 require_once __DIR__ . '/config/config.php';
 
 // Function to check if port is available
