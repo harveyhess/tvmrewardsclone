@@ -27,7 +27,7 @@ function startServer($port) {
     );
     
     echo "Starting server on port {$port}...\n";
-    echo "Access the application at: http://localhost:{$port}\n";
+    echo "Access the application at: http://0.0.0.0{$port}\n";
     echo "Press Ctrl+C to stop the server\n";
     
     system($command);
