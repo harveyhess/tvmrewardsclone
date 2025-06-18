@@ -1,0 +1,19 @@
+RewriteEngine On
+RewriteBase /
+
+# Allow direct access to assets
+RewriteRule ^assets/ - [L]
+
+# Allow direct access to PHP files in patient and admin directories
+RewriteRule ^(patient|admin)/.*\.php$ - [L]
+
+# Prevent direct access to src directory
+RewriteRule ^src/ - [F,L]
+
+# Route all other requests through the router
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ src/routing/dispatch.php [QSA,L]
+
+# Handle 404 errors
+ErrorDocument 404 /404.php 

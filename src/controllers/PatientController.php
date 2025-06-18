@@ -37,6 +37,11 @@ class PatientController extends BaseController {
             [$UHID]
         );
 
+        // Always fetch the current tier based on points
+        $tierController = new TierController(false);
+        $tier = $tierController->getTierByPoints($patient['total_points']);
+        $currentTier = $tier ? $tier['name'] : 'No Tier';
+
         $transactions = $this->db->fetchAll(
             "SELECT * FROM transactions WHERE UHID = ? ORDER BY transaction_date DESC LIMIT 10",
             [$UHID]
@@ -44,7 +49,8 @@ class PatientController extends BaseController {
 
         return $this->render('patient/dashboard', [
             'patient' => $patient,
-            'transactions' => $transactions
+            'transactions' => $transactions,
+            'current_tier' => $currentTier
         ]);
     }
 
@@ -53,20 +59,45 @@ class PatientController extends BaseController {
             return $this->render('patient/login');
         }
 
-        $identifier = $this->sanitizeInput($_POST['identifier']);
-        $patient = $this->db->fetch(
-            "SELECT * FROM patients WHERE UHID = ? OR phone_number = ?",
-            [$identifier, $identifier]
-        );
+        $name = trim($this->sanitizeInput($_POST['name']));
+        $uhid = trim($this->sanitizeInput($_POST['uhid']));
 
-        if (!$patient) {
+        error_log("[PatientController] Login attempt - Name: $name, UHID: $uhid");
+
+        if (empty($name) || empty($uhid)) {
+            error_log("[PatientController] Empty name or UHID");
             return $this->render('patient/login', [
-                'error' => 'Patient not found'
+                'error' => 'Name and UHID are required'
             ]);
         }
 
+        // Try exact match first
+        $patient = $this->validatePatient($name, $uhid);
+        
+        if (!$patient) {
+            // Try partial name match (first two names)
+            $nameParts = explode(' ', $name);
+            if (count($nameParts) >= 2) {
+                $partialName = $nameParts[0] . ' ' . $nameParts[1];
+                error_log("[PatientController] Trying partial name match: $partialName");
+                $patient = $this->validatePatient($partialName, $uhid);
+            }
+        }
+
+        if (!$patient) {
+            error_log("[PatientController] No matching patient found");
+            return $this->render('patient/login', [
+                'error' => 'Invalid name or UHID'
+            ]);
+        }
+
+        error_log("[PatientController] Patient found, logging in: " . $patient['name']);
+
         $_SESSION['user_id'] = $patient['id'];
         $_SESSION['is_admin'] = false;
+
+        // Log the login
+        $this->logLogin($patient['id'], 'regular');
 
         // Update patient's tier
         $this->updatePatientTier($patient['id']);
@@ -187,63 +218,89 @@ class PatientController extends BaseController {
         return $tierController->updatePatientTier($UHID);
     }
 
-    public function validatePatient($name, $phone) {
+    public function validatePatient($name, $uhid) {
         // Debug log
-        error_log("[PatientController] Validating patient - Name: $name, Phone: $phone");
+        error_log("[PatientController] Validating patient - Name: $name, UHID: $uhid");
 
         // First try exact match
-        $query = "SELECT * FROM patients WHERE name = ? AND phone_number = ?";
+        $query = "SELECT * FROM patients WHERE name = ? AND UHID = ?";
         error_log("[PatientController] Trying exact match query: $query");
         
-        $patient = $this->db->fetch($query, [$name, $phone]);
+        $patient = $this->db->fetch($query, [$name, $uhid]);
         
         if ($patient) {
-            error_log("[PatientController] Found patient with exact match: " . print_r($patient, true));
-            // Update patient's tier
-            $this->updatePatientTier($patient['id']);
+            error_log("[PatientController] Found exact match");
             return $patient;
         }
 
         // If no exact match, try case-insensitive match
-        $query = "SELECT * FROM patients WHERE LOWER(name) = LOWER(?) AND phone_number = ?";
+        $query = "SELECT * FROM patients WHERE LOWER(name) = LOWER(?) AND UHID = ?";
         error_log("[PatientController] Trying case-insensitive match query: $query");
         
-        $patient = $this->db->fetch($query, [$name, $phone]);
+        $patient = $this->db->fetch($query, [$name, $uhid]);
         
         if ($patient) {
-            error_log("[PatientController] Found patient with case-insensitive match: " . print_r($patient, true));
-            // Update patient's tier
-            $this->updatePatientTier($patient['id']);
-        } else {
-            error_log("[PatientController] No patient found with either match method");
+            error_log("[PatientController] Found case-insensitive match");
+            return $patient;
         }
-        
-        return $patient;
+
+        error_log("[PatientController] No match found");
+        return null;
     }
 
     public function logLogin($UHID, $method = 'regular') {
-        // Get patient details directly
-        $patient = $this->db->fetch(
-            "SELECT name, phone_number FROM patients WHERE id = ?",
-            [$UHID]
-        );
-        
-        if (!$patient) {
-            error_log("[PatientController] Failed to log login - Patient not found: $UHID");
+        try {
+            // Get patient details directly - try both UHID and id
+            $patient = $this->db->fetch(
+                "SELECT name FROM patients WHERE UHID = ? OR id = ?",
+                [$UHID, $UHID]
+            );
+            
+            if (!$patient) {
+                error_log("[PatientController] Failed to log login - Patient not found: $UHID");
+                return false;
+            }
+
+            // Insert login log with patient details
+            $result = $this->db->insert('login_logs', [
+                'UHID' => $UHID,
+                'patient_name' => $patient['name'],
+                'login_method' => $method,
+                'login_time' => date('Y-m-d H:i:s')
+            ]);
+
+            error_log("[PatientController] Login log result: " . ($result ? "Success" : "Failed"));
+            return $result;
+        } catch (Exception $e) {
+            // If table doesn't exist, create it and try again
+            if (strpos($e->getMessage(), "Table 'railway.login_logs' doesn't exist") !== false) {
+                error_log("[PatientController] Creating login_logs table");
+                $this->db->execute("
+                    CREATE TABLE IF NOT EXISTS login_logs (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        UHID VARCHAR(255) NOT NULL,
+                        patient_name VARCHAR(255) NOT NULL,
+                        login_method VARCHAR(50) NOT NULL,
+                        login_time DATETIME NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                ");
+                
+                // Try the insert again
+                $result = $this->db->insert('login_logs', [
+                    'UHID' => $UHID,
+                    'patient_name' => $patient['name'],
+                    'login_method' => $method,
+                    'login_time' => date('Y-m-d H:i:s')
+                ]);
+                
+                error_log("[PatientController] Second login log attempt result: " . ($result ? "Success" : "Failed"));
+                return $result;
+            }
+            
+            error_log("[PatientController] Error logging login: " . $e->getMessage());
             return false;
         }
-
-        // Insert login log with patient details
-        $result = $this->db->insert('login_logs', [
-            'UHID' => $UHID,
-            'patient_name' => $patient['name'],
-            'phone_number' => $patient['phone_number'],
-            'login_method' => $method,
-            'login_time' => date('Y-m-d H:i:s')
-        ]);
-
-        error_log("[PatientController] Login log result: " . ($result ? "Success" : "Failed"));
-        return $result;
     }
 
     public function getPointsRate() {
@@ -394,6 +451,18 @@ class PatientController extends BaseController {
         } catch (Exception $e) {
             $this->db->getConnection()->rollBack();
             throw $e;
+        }
+    }
+
+    public function verifyQrToken($token) {
+        try {
+            $sql = "SELECT * FROM patients WHERE qr_token = ? AND qr_token_expiry > NOW()";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->execute([$token]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error verifying QR token: " . $e->getMessage());
+            return false;
         }
     }
 } 

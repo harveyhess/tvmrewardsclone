@@ -205,68 +205,69 @@ class AdminController extends BaseController {
     }
 
     public function generateQrCode($UHID) {
+        error_log("[AdminController] Generating QR code for UHID: " . $UHID);
+        
         $patient = $this->getPatientDetails($UHID);
         if (!$patient) {
+            error_log("[AdminController] Patient not found for UHID: " . $UHID);
             return false;
         }
 
+        error_log("[AdminController] Found patient: " . $patient['name'] . " (ID: " . $patient['id'] . ")");
+
         // Generate a unique token if not exists
         if (empty($patient['qr_token'])) {
+            error_log("[AdminController] Generating new QR token for patient");
             $token = bin2hex(random_bytes(32)); // Using 32 bytes for better security
-            $this->db->execute(
+            $result = $this->db->execute(
                 "UPDATE patients SET qr_token = ? WHERE id = ?",
-                [$token, $UHID]
+                [$token, $patient['id']]
             );
+            if (!$result) {
+                error_log("[AdminController] Failed to update patient with QR token");
+                return false;
+            }
+            error_log("[AdminController] Successfully updated patient with QR token");
             $patient['qr_token'] = $token;
+        } else {
+            error_log("[AdminController] Using existing QR token: " . $patient['qr_token']);
         }
 
-        // Create login data
+        // Create login data - only include name and token
         $loginData = [
             'name' => $patient['name'],
-            'phone' => $patient['phone_number'],
             'token' => $patient['qr_token']
         ];
+
+        error_log("[AdminController] Generated login data for patient");
 
         // Return both token and patient info
         return [
             'token' => $patient['qr_token'],
             'UHID' => $patient['UHID'],
             'name' => $patient['name'],
-            'phone' => $patient['phone_number'],
             'login_data' => base64_encode(json_encode($loginData))
         ];
     }
 
     public function getDashboardStats() {
         $stats = [
-            'total_patients' => 0,
-            'total_points' => 0,
-            'total_transactions' => 0
+            'total_patients' => 0
         ];
 
-        // Get total patients
-        $result = $this->db->fetch("SELECT COUNT(*) as count FROM patients");
-        $stats['total_patients'] = $result['count'];
-
-        // Get total points
-        $result = $this->db->fetch("SELECT SUM(total_points) as total FROM patients");
-        $stats['total_points'] = $result['total'] ?? 0;
-
-        // Get total transactions
-        $result = $this->db->fetch("SELECT COUNT(*) as count FROM transactions");
-        $stats['total_transactions'] = $result['count'];
-
-        // Ensure points are being updated when transactions are processed
-        $this->updatePointsFromTransactions();
+        try {
+            // Get only total patients count initially
+            $result = $this->db->fetch(
+                "SELECT COUNT(*) as total_patients FROM patients"
+            );
+            
+            $stats['total_patients'] = $result['total_patients'];
+            
+        } catch (Exception $e) {
+            error_log("Error getting dashboard stats: " . $e->getMessage());
+        }
 
         return $stats;
-    }
-
-    private function updatePointsFromTransactions() {
-        $transactions = $this->db->fetchAll("SELECT * FROM transactions");
-        foreach ($transactions as $transaction) {
-            $this->updatePoints($transaction['UHID'], $transaction['points_earned']);
-        }
     }
 
     public function getPatients($page = 1, $limit = 10) {
@@ -281,11 +282,15 @@ class AdminController extends BaseController {
         return $result['count'];
     }
 
-    public function getPatientDetails($id) {
-        return $this->db->fetch(
-            "SELECT * FROM patients WHERE id = ?",
-            [$id]
-        );
+    public function getPatientDetails($idOrUhid) {
+        // Try by id (integer)
+        if (is_numeric($idOrUhid)) {
+            $patient = $this->db->fetch("SELECT * FROM patients WHERE id = ?", [$idOrUhid]);
+            if ($patient) return $patient;
+        }
+        // Try by UHID (string)
+        $patient = $this->db->fetch("SELECT * FROM patients WHERE UHID = ?", [$idOrUhid]);
+        return $patient;
     }
 
     public function updatePoints($UHID, $points) {
@@ -356,5 +361,47 @@ class AdminController extends BaseController {
     public function getRedemptions($UHID) {
         $rewardController = new RewardController();
         return $rewardController->getPatientRedemptions($UHID);
+    }
+
+    public function getTransactions($page = 1, $limit = 10) {
+        try {
+            $offset = ($page - 1) * $limit;
+            
+            // Optimize transaction query with proper indexing
+            $transactions = $this->db->fetchAll(
+                "SELECT SQL_CALC_FOUND_ROWS
+                    t.id,
+                    t.transaction_date,
+                    t.Amount,
+                    t.points_earned,
+                    t.ReffNo,
+                    p.name as patient_name,
+                    p.UHID as patient_uhid
+                FROM transactions t
+                FORCE INDEX (idx_transaction_date)
+                JOIN patients p ON t.UHID = p.id
+                ORDER BY t.transaction_date DESC
+                LIMIT ? OFFSET ?",
+                [$limit, $offset]
+            );
+
+            // Get total count using FOUND_ROWS()
+            $total = $this->db->fetch("SELECT FOUND_ROWS() as count")['count'];
+
+            return [
+                'transactions' => $transactions,
+                'total' => $total,
+                'currentPage' => $page,
+                'totalPages' => ceil($total / $limit)
+            ];
+        } catch (Exception $e) {
+            error_log("Error getting transactions: " . $e->getMessage());
+            return [
+                'transactions' => [],
+                'total' => 0,
+                'currentPage' => $page,
+                'totalPages' => 0
+            ];
+        }
     }
 }

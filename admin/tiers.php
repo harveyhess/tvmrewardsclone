@@ -108,6 +108,19 @@ $tiers = $controller->getTiers();
         const modalTitle = document.getElementById('modalTitle');
         const closeBtn = document.querySelector('.close');
 
+        // Add loading state to buttons
+        function setLoading(button, isLoading) {
+            const originalText = button.dataset.originalText || button.textContent;
+            if (isLoading) {
+                button.dataset.originalText = originalText;
+                button.disabled = true;
+                button.innerHTML = '<span class="loading-spinner"></span> Loading...';
+            } else {
+                button.disabled = false;
+                button.textContent = originalText;
+            }
+        }
+
         function showAddTierModal() {
             modalTitle.textContent = 'Add New Tier';
             tierForm.reset();
@@ -118,6 +131,8 @@ $tiers = $controller->getTiers();
         document.querySelectorAll('.edit-tier').forEach(button => {
             button.addEventListener('click', function() {
                 const tierId = this.dataset.id;
+                setLoading(this, true);
+                
                 fetch(`get_tier.php?id=${tierId}`)
                     .then(response => response.json())
                     .then(tier => {
@@ -128,6 +143,12 @@ $tiers = $controller->getTiers();
                         document.getElementById('maxPoints').value = tier.max_points || '';
                         document.getElementById('description').value = tier.description;
                         tierModal.style.display = 'block';
+                    })
+                    .catch(error => {
+                        alert('Error loading tier: ' + error.message);
+                    })
+                    .finally(() => {
+                        setLoading(this, false);
                     });
             });
         });
@@ -136,6 +157,8 @@ $tiers = $controller->getTiers();
             button.addEventListener('click', function() {
                 if (confirm('Are you sure you want to delete this tier?')) {
                     const tierId = this.dataset.id;
+                    setLoading(this, true);
+                    
                     fetch('delete_tier.php', {
                         method: 'POST',
                         headers: {
@@ -149,7 +172,12 @@ $tiers = $controller->getTiers();
                             location.reload();
                         } else {
                             alert('Error deleting tier: ' + data.error);
+                            setLoading(this, false);
                         }
+                    })
+                    .catch(error => {
+                        alert('Error deleting tier: ' + error.message);
+                        setLoading(this, false);
                     });
                 }
             });
@@ -157,6 +185,9 @@ $tiers = $controller->getTiers();
 
         tierForm.addEventListener('submit', function(e) {
             e.preventDefault();
+            const submitButton = this.querySelector('button[type="submit"]');
+            setLoading(submitButton, true);
+            
             const formData = new FormData(this);
             const data = Object.fromEntries(formData.entries());
             
@@ -173,7 +204,12 @@ $tiers = $controller->getTiers();
                     location.reload();
                 } else {
                     alert('Error saving tier: ' + data.error);
+                    setLoading(submitButton, false);
                 }
+            })
+            .catch(error => {
+                alert('Error saving tier: ' + error.message);
+                setLoading(submitButton, false);
             });
         });
 
@@ -187,5 +223,28 @@ $tiers = $controller->getTiers();
             }
         }
     </script>
+
+    <style>
+        .loading-spinner {
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5em;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+    </style>
 </body>
 </html> 

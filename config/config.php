@@ -18,7 +18,7 @@ if (!defined('DB_NAME')) define('DB_NAME', 'Veteran');
 
 // Application configuration
 define('SITE_NAME', 'Patient Loyalty Rewards System');
-define('SITE_URL', defined('SITE_URL') ? SITE_URL : 'http://0.0.0.0/Veteran');
+define('SITE_URL', defined('SITE_URL') ? SITE_URL : ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['SERVER_NAME'] . (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] != '80' && $_SERVER['SERVER_PORT'] != '443' ? ':' . $_SERVER['SERVER_PORT'] : '')));
 define('UPLOAD_DIR', __DIR__ . '/../uploads');
 define('MAX_FILE_SIZE', 5 * 1024 * 1024); // 5MB
 define('ALLOWED_FILE_TYPES', ['csv','xlsx']);

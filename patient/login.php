@@ -72,14 +72,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     debug_log("Login attempt - POST data: " . print_r($_POST, true));
     
     $name = trim($_POST['name'] ?? '');
-    $phone = trim($_POST['phone'] ?? '');
+    $uhid = trim($_POST['uhid'] ?? '');
     
-    if (empty($name) || empty($phone)) {
-        $error = 'Please enter both name and phone number';
+    if (empty($name) || empty($uhid)) {
+        $error = 'Please enter both name and UHID';
         debug_log("Login failed - Empty fields");
     } else {
-        debug_log("Validating patient - Name: $name, Phone: $phone");
-        $patient = $controller->validatePatient($name, $phone);
+        debug_log("Validating patient - Name: $name, UHID: $uhid");
+        $patient = $controller->validatePatient($name, $uhid);
         
         if ($patient) {
             debug_log("Patient found - ID: " . $patient['id']);
@@ -109,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             }
         } else {
-            $error = 'Invalid name or phone number';
+            $error = 'Invalid name or UHID';
             debug_log("Login failed - Invalid credentials");
         }
     }
@@ -144,10 +144,10 @@ debug_log("Current session state: " . print_r($_SESSION, true));
                 </div>
                 
                 <div class="form-group">
-                    <label for="phone">Phone Number</label>
-                    <input type="tel" id="phone" name="phone" required 
-                           value="<?php echo htmlspecialchars($_POST['phone'] ?? ''); ?>"
-                           placeholder="Enter your phone number">
+                    <label for="uhid">UHID</label>
+                    <input type="text" id="uhid" name="uhid" required 
+                           value="<?php echo htmlspecialchars($_POST['uhid'] ?? ''); ?>"
+                           placeholder="Enter your UHID">
                 </div>
                 
                 <button type="submit" class="btn btn-primary">Login</button>

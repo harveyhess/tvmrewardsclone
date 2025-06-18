@@ -21,9 +21,10 @@
             <section class="patient-info">
                 <div class="info-card">
                     <h3>Patient Information</h3>
+                    <p><strong>Total Points:</strong> <span class="points"><?php echo $patient['total_points']; ?></span></p>
+                    <p><strong>Current Tier:</strong> <?php echo htmlspecialchars($current_tier); ?></p>
                     <p><strong>UHID:</strong> <?php echo htmlspecialchars($patient['UHID']); ?></p>
                     <p><strong>Phone Number:</strong> <?php echo htmlspecialchars($patient['phone_number']); ?></p>
-                    <p><strong>Total Points:</strong> <span class="points"><?php echo $patient['total_points']; ?></span></p>
                 </div>
             </section>
 

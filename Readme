@@ -1,0 +1,169 @@
+identidy it fh codebase has all the below and optimized to the system workflow below 📥 1. Excel Upload (Admin)
+Admin uploads an Excel file via web interface.
+
+System reads the file using a library like PhpSpreadsheet.
+
+Case-insensitive header matching ensures flexibility:
+
+UHID, PatientName(Pname) ,ReffNo, Amount are detected regardless of case.
+
+Extra columns are ignored.
+
+🔄 2. Processing Each Row
+For each row in the Excel:
+
+Step 1: Sanitize and validate:
+
+Ensure UHID, ReffNo, and Amount are present and valid.
+
+Skip rows with missing/invalid values.
+
+Step 2: Match UHID:
+
+If UHID exists, continue.
+
+If UHID doesn't exist, create patient record:
+
+Name = PName
+
+UHID = temp password
+
+Step 3: Check transaction:
+
+If ReffNo already exists → skip (no duplicate processing).
+
+If ReffNo is new:
+
+Points = Amount / X (X = 100 by default, configurable).
+
+Round to 2 decimal places.
+
+Add points to existing balance.
+
+Update transaction log with:
+
+ReffNo, Amount, UHID, Points awarded, Date, etc.
+
+🧮 3. Tier Calculation
+After updating total points:
+
+< 500 → Bronze
+
+501–999 → Silver
+
+≥ 1000 → Gold
+
+Store tier separately or recalculate dynamically.
+
+🧾 4. Database Structure (Recommended Tables)
+patients
+id	uhid	name	password	tier	total_points	created_at
+
+transactions
+| id | uhid | reff_no | amount | points_awarded | date_uploaded | uploaded_by |
+
+rewards
+| id | name | description | points_required | tier_required | created_by | active |
+
+redemptions
+| id | patient_id | reward_id | redeemed_at | points_used | admin_id |
+
+admins
+| id | name | email | password | role |
+
+config
+| key | value |
+(e.g. points_per_amount → 100)
+
+🧑‍💻 PATIENT LOGIN
+Login with: name + UHID (used as password).
+
+Later: allow user to set/change password after first login.
+
+Secure with password hashing (e.g., password_hash()).
+
+👁️‍🗨️ PATIENT DASHBOARD
+Show:
+
+✅ Current points
+
+✅ Tier (Bronze/Silver/Gold)
+
+✅ Transactions (reffno, amount, date, points earned)
+
+✅ Rewards available (filtered by tier and points)
+
+✅ Redemption history
+
+🛠️ ADMIN DASHBOARD
+Upload Excel
+
+Manage:
+
+Patients
+
+Rewards (add/edit/delete)
+
+Redemptions
+
+Transactions log
+
+Configure:
+
+Points-per-amount ratio
+
+Tier thresholds
+
+Export logs (CSV)
+
+✅ BEST PRACTICES
+⛓️ Transaction Deduplication
+Enforce unique ReffNo at DB level using unique index.
+
+Log skipped transactions for admin review.
+
+🔐 Security
+Sanitize all Excel inputs.
+
+Use CSRF protection on form uploads.
+
+Hash UHID or generated password using password_hash().
+
+Use prepared statements or ORM to avoid SQL injection.
+
+📁 File Handling
+Validate file extension: .xls, .xlsx
+
+Limit upload size (e.g., max 2MB)
+
+Delete file after processing or store with logs.
+
+🔄 Point/Tier Recalculation
+Keep total points stored for speed.
+
+Optionally allow "recalculate" feature in admin panel to re-tally all points and reset tier if bugs occur.
+
+🔚 Redemption Flow
+Patient clicks Redeem button.
+
+Backend:
+
+Checks if they meet points and tier criteria.
+
+Deducts reward.points_required from patient.
+
+Adds row in redemptions table.
+
+Disallow redeeming if insufficient points.
+
+✅ CONFIGURABLE ITEMS
+Store in a config table or admin settings:
+
+Points per amount ratio
+
+Tier thresholds
+
+Allowed file formats/sizes
+
+Default password policy
+

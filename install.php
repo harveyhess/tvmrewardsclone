@@ -6,90 +6,111 @@ try {
     // Use the Database class for connection (supports DATABASE_URL)
     $pdo = Database::getInstance()->getConnection();
 
-    // Create tables
+    // Create tables with optimized schema
     $tables = [
-        "CREATE TABLE IF NOT EXISTS admins (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            username VARCHAR(50) UNIQUE NOT NULL,
-            password VARCHAR(255) NOT NULL,
-            email VARCHAR(100) UNIQUE NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )",
+        // Drop existing tables if they exist - order matters due to foreign key constraints
+        "DROP TABLE IF EXISTS points_ledger",        // References patients
+        "DROP TABLE IF EXISTS redemptions",          // References patients and rewards
+        "DROP TABLE IF EXISTS transactions",         // References patients
+        "DROP TABLE IF EXISTS login_logs",           // References patients
+        "DROP TABLE IF EXISTS tier_downgrade_tracking", // References patients and tiers
+        "DROP TABLE IF EXISTS points_settings",      // References admins
+        "DROP TABLE IF EXISTS patients",             // References tiers
+        "DROP TABLE IF EXISTS rewards",              // No foreign keys
+        "DROP TABLE IF EXISTS tiers",                // No foreign keys
+        "DROP TABLE IF EXISTS admins",               // No foreign keys
+        "DROP TABLE IF EXISTS transaction_sync",     // No foreign keys
+        "DROP TABLE IF EXISTS transaction_csv_links", // No foreign keys
 
-        "CREATE TABLE IF NOT EXISTS tiers (
+        // Create admins table with proper indexing
+        "CREATE TABLE admins (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(50) NOT NULL,
+            password VARCHAR(255) NOT NULL,
+            email VARCHAR(100) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY idx_username (username),
+            UNIQUE KEY idx_email (email)
+        ) ENGINE=InnoDB",
+
+        // Create tiers table with optimized structure
+        "CREATE TABLE tiers (
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(50) NOT NULL,
             min_points INT NOT NULL,
             max_points INT,
             description TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        )",
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_points (min_points, max_points)
+        ) ENGINE=InnoDB",
         
-        "CREATE TABLE IF NOT EXISTS patients (
+        // Create patients table with optimized indexes
+        "CREATE TABLE patients (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            UHID VARCHAR(50) UNIQUE NOT NULL, /*UHID CHANGED ,Amount,DATE,ReffNo(transaction id)*/
-            name VARCHAR(100) NOT NULL,/*PName*/
-            phone_number VARCHAR(20) NOT NULL,
+            UHID VARCHAR(50) NOT NULL,
+            name VARCHAR(100) NOT NULL,
             total_points INT DEFAULT 0,
+            points_version INT DEFAULT 1,
             tier_id INT,
-            qr_token VARCHAR(255) UNIQUE,
+            qr_token VARCHAR(255),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            FOREIGN KEY (tier_id) REFERENCES tiers(id)
-        )",
+            UNIQUE KEY idx_uhid (UHID),
+            UNIQUE KEY idx_qr_token (qr_token),
+            INDEX idx_points (total_points),
+            INDEX idx_tier (tier_id),
+            FOREIGN KEY (tier_id) REFERENCES tiers(id) ON DELETE SET NULL
+        ) ENGINE=InnoDB",
         
-        "CREATE TABLE IF NOT EXISTS transactions (
+        // Create transactions table with optimized structure for bulk operations
+        "CREATE TABLE transactions (
             id INT AUTO_INCREMENT PRIMARY KEY,
             UHID INT NOT NULL,
             ReffNo VARCHAR(255) NOT NULL,
             Amount DECIMAL(10,2) NOT NULL,
             points_earned INT NOT NULL,
+            points_version INT NOT NULL,
             transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (UHID) REFERENCES patients(id)
-        )",
-        
-        "CREATE TABLE IF NOT EXISTS points_settings (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            points_rate INT NOT NULL DEFAULT 100,
-            updated_by INT NOT NULL,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            FOREIGN KEY (updated_by) REFERENCES admins(id)
-        )",
-
-        "CREATE TABLE IF NOT EXISTS login_logs (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            UHID INT NOT NULL,
-            patient_name VARCHAR(100) NOT NULL,
-            phone_number VARCHAR(20) NOT NULL,
-            login_method ENUM('regular', 'qr_code') NOT NULL DEFAULT 'regular',
-            login_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (UHID) REFERENCES patients(id)
-        )",
-
-        "CREATE TABLE IF NOT EXISTS rewards (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(100) NOT NULL,
-            description TEXT,
-            points_cost INT NOT NULL,
-            is_active BOOLEAN DEFAULT TRUE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        )",
-
-        "CREATE TABLE IF NOT EXISTS points_ledger (
+            INDEX idx_uhid (UHID),
+            INDEX idx_transaction_date (transaction_date),
+            INDEX idx_reffno (ReffNo),
+            UNIQUE KEY idx_unique_transaction (UHID, ReffNo, Amount),
+            FOREIGN KEY (UHID) REFERENCES patients(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB",
+        
+        // Create points ledger for tracking point changes
+        "CREATE TABLE points_ledger (
             id INT AUTO_INCREMENT PRIMARY KEY,
             UHID INT NOT NULL,
             points INT NOT NULL,
-            type ENUM('earn', 'redeem') NOT NULL,
+            type ENUM('earn', 'redeem', 'adjust') NOT NULL,
             reference_id INT,
-            reference_type ENUM('transaction', 'redemption') NOT NULL,
+            reference_type VARCHAR(50),
             description TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (UHID) REFERENCES patients(id)
-        )",
-
-        "CREATE TABLE IF NOT EXISTS redemptions (
+            INDEX idx_uhid (UHID),
+            INDEX idx_type (type),
+            INDEX idx_reference (reference_type, reference_id),
+            FOREIGN KEY (UHID) REFERENCES patients(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB",
+        
+        // Create rewards table
+        "CREATE TABLE rewards (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(100) NOT NULL,
+            description TEXT,
+            points_required INT NOT NULL,
+            is_active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_points (points_required),
+            INDEX idx_active (is_active)
+        ) ENGINE=InnoDB",
+        
+        // Create redemptions table
+        "CREATE TABLE redemptions (
             id INT AUTO_INCREMENT PRIMARY KEY,
             UHID INT NOT NULL,
             reward_id INT NOT NULL,
@@ -97,11 +118,24 @@ try {
             status ENUM('pending', 'completed', 'cancelled') DEFAULT 'pending',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             completed_at TIMESTAMP NULL,
-            FOREIGN KEY (UHID) REFERENCES patients(id),
-            FOREIGN KEY (reward_id) REFERENCES rewards(id)
-        )",
-
-        "CREATE TABLE IF NOT EXISTS transaction_sync (
+            INDEX idx_uhid (UHID),
+            INDEX idx_status (status),
+            INDEX idx_created (created_at),
+            FOREIGN KEY (UHID) REFERENCES patients(id) ON DELETE CASCADE,
+            FOREIGN KEY (reward_id) REFERENCES rewards(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB",
+        
+        // Create points settings table
+        "CREATE TABLE points_settings (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            points_rate INT NOT NULL,
+            updated_by INT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (updated_by) REFERENCES admins(id)
+        ) ENGINE=InnoDB",
+        
+        // Create transaction sync table for tracking CSV imports
+        "CREATE TABLE transaction_sync (
             id INT AUTO_INCREMENT PRIMARY KEY,
             file_name VARCHAR(255) NOT NULL,
             last_processed_line INT DEFAULT 0,
@@ -109,83 +143,64 @@ try {
             status ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
             error_message TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        )",
-
-        "CREATE TABLE IF NOT EXISTS tier_downgrade_tracking (
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_status (status),
+            INDEX idx_sync_time (last_sync_time)
+        ) ENGINE=InnoDB",
+        
+        // Create tier downgrade tracking table
+        "CREATE TABLE tier_downgrade_tracking (
             id INT AUTO_INCREMENT PRIMARY KEY,
             UHID INT NOT NULL,
             current_tier_id INT NOT NULL,
             downgrade_reason ENUM('inactivity', 'redemption_limit') NOT NULL,
             downgrade_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             is_pending BOOLEAN DEFAULT TRUE,
-            FOREIGN KEY (UHID) REFERENCES patients(id),
+            INDEX idx_uhid (UHID),
+            INDEX idx_pending (is_pending),
+            FOREIGN KEY (UHID) REFERENCES patients(id) ON DELETE CASCADE,
             FOREIGN KEY (current_tier_id) REFERENCES tiers(id)
-        )",
+        ) ENGINE=InnoDB",
 
-        "CREATE TABLE IF NOT EXISTS transaction_csv_links (
+        // Create transaction CSV links table
+        "CREATE TABLE transaction_csv_links (
             id INT AUTO_INCREMENT PRIMARY KEY,
             url VARCHAR(255) NOT NULL,
             last_fetched TIMESTAMP NULL,
             status ENUM('active', 'inactive') DEFAULT 'active',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        )"
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_status (status),
+            INDEX idx_last_fetched (last_fetched)
+        ) ENGINE=InnoDB"
     ];
 
-    foreach ($tables as $sql) {
-        $pdo->exec($sql);
+    // Execute each table creation query
+    foreach ($tables as $query) {
+        $pdo->exec($query);
     }
 
-    // Create default admin account
-    $defaultAdmin = [
-        'username' => 'admin',
-        'password' => password_hash('admin123', PASSWORD_DEFAULT),
-        'email' => 'admin@hospital.com'
-    ];
+    // Insert default admin user
+    $defaultPassword = password_hash('admin123', PASSWORD_DEFAULT);
+    $pdo->exec("INSERT INTO admins (username, password, email) VALUES ('admin', '$defaultPassword', 'admin@example.com')");
 
-    $stmt = $pdo->prepare("INSERT IGNORE INTO admins (username, password, email) VALUES (?, ?, ?)");
-    $stmt->execute([$defaultAdmin['username'], $defaultAdmin['password'], $defaultAdmin['email']]);
-
-    // Insert default points settings
-    $stmt = $pdo->prepare("INSERT IGNORE INTO points_settings (points_rate, updated_by) VALUES (?, 1)");
-    $stmt->execute([DEFAULT_POINTS_RATE]);
+    // Insert default points rate
+    $pdo->exec("INSERT INTO points_settings (points_rate, updated_by) VALUES (100, 1)");
 
     // Insert default tiers
     $defaultTiers = [
-        ['Silver', 0, 500, 'Basic tier with standard benefits'],
-        ['Gold', 501, 1000, 'Premium tier with enhanced benefits'],
-        ['Platinum', 1001, null, 'Elite tier with exclusive benefits']
+        ['Bronze', 0, 500, 'Basic tier with standard benefits'],
+        ['Silver', 501, 999, 'Mid-tier with enhanced benefits'],
+        ['Gold', 1000, null, 'Premium tier with exclusive benefits']
     ];
 
-    $stmt = $pdo->prepare("INSERT IGNORE INTO tiers (name, min_points, max_points, description) VALUES (?, ?, ?, ?)");
     foreach ($defaultTiers as $tier) {
+        $stmt = $pdo->prepare("INSERT INTO tiers (name, min_points, max_points, description) VALUES (?, ?, ?, ?)");
         $stmt->execute($tier);
     }
 
-    // Insert default rewards
-    $defaultRewards = [
-        ['Free Consultation', 'One free consultation with any doctor', 100],
-        ['10% Discount', '10% discount on your next visit', 200],
-        ['Free Lab Test', 'One free basic lab test', 300],
-        ['20% Discount', '20% discount on your next visit', 400],
-        ['Free Dental Checkup', 'One free dental checkup', 500],
-        ['Free Eye Test', 'One free eye test', 600],
-        ['30% Discount', '30% discount on your next visit', 700],
-        ['Free Health Package', 'Complete health checkup package', 1000]
-    ];
-
-    $stmt = $pdo->prepare("INSERT IGNORE INTO rewards (name, description, points_cost, is_active) VALUES (?, ?, ?, 1)");
-    foreach ($defaultRewards as $reward) {
-        $stmt->execute($reward);
-    }
-
-    echo "Installation completed successfully!\n";
-    echo "Default admin credentials:\n";
-    echo "Username: admin\n";
-    echo "Password: admin123\n";
-    echo "Please change these credentials after first login.\n";
-
-} catch (PDOException $e) {
-    die("Installation failed: " . $e->getMessage());
+    echo "Database setup completed successfully!\n";
+} catch (Exception $e) {
+    echo "Error setting up database: " . $e->getMessage() . "\n";
+    exit(1);
 }

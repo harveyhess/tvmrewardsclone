@@ -33,7 +33,7 @@
                             <tr>
                                 <th>UHID</th>
                                 <th>Name</th>
-                                <th>Phone Number</th>
+                                <th>UHID</th>
                                 <th>Total Points</th>
                                 <th>Actions</th>
                             </tr>
@@ -43,13 +43,16 @@
                                 <tr>
                                     <td><?php echo htmlspecialchars($patient['UHID']); ?></td>
                                     <td><?php echo htmlspecialchars($patient['name']); ?></td>
-                                    <td><?php echo htmlspecialchars($patient['phone_number']); ?></td>
+                                    <td><?php echo htmlspecialchars($patient['UHID']); ?></td>
                                     <td>
                                         <span class="points"><?php echo $patient['total_points']; ?></span>
                                        
                                     </td>
                                     <td>
-                                        <button class="qr-code" data-UHID="<?php echo $patient['id']; ?>">QR Code</button>
+                                        <button class="qr-code" data-UHID="<?php echo htmlspecialchars($patient['UHID']); ?>" onclick="console.log('QR button clicked for UHID:', '<?php echo htmlspecialchars($patient['UHID']); ?>')">
+                                            QR Code
+                                        </button>
+                                        <a href="transactions.php?UHID=<?php echo htmlspecialchars($patient['UHID']); ?>" class="button">View Transactions</a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -69,7 +72,7 @@
                 <?php endif; ?>
             </section>
 
-            <!-- Points Edit Modal -->
+            <!-- Points Edit Modal 
             <div id="pointsModal" class="modal">
                 <div class="modal-content">
                     <h2>Edit Points</h2>
@@ -83,7 +86,7 @@
                         <button type="button" class="button cancel">Cancel</button>
                     </form>
                 </div>
-            </div>
+            </div>-->
 
             <!-- QR Code Modal -->
             <div id="qrModal" class="modal">

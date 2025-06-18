@@ -13,7 +13,7 @@
             <nav>
                 <a href="dashboard.php" class="active">Dashboard</a>
                 <a href="patients.php">Patients</a>
-                <a href="upload.php">Upload CSV</a>
+                <a href="upload.php">Upload Excel</a>
                 <a href="logout.php">Logout</a>
             </nav>
         </header>
@@ -30,7 +30,7 @@
             <section class="actions">
                 <h2>Quick Actions</h2>
                 <div class="action-buttons">
-                    <a href="upload.php" class="button">Upload CSV/Excel</a>
+                    <a href="upload.php" class="button">Upload Excel</a>
                     <a href="patients.php" class="button">View Patients</a>
                    
                     <a href="register_patient.php" class="button">Register New Patient</a>

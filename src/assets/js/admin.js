@@ -174,7 +174,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // QR code button click
     document.querySelectorAll('.qr-code').forEach(button => {
         button.addEventListener('click', function() {
-            const UHID = this.dataset.UHID;
+            const UHID = this.getAttribute('data-UHID');
+            console.log('Generating QR code for UHID:', UHID);
+            
+            if (!UHID) {
+                console.error('No UHID found for QR code generation');
+                showFlashMessage('Error: No UHID found', 'error');
+                return;
+            }
+
             const qrModal = document.getElementById('qrModal');
             const qrCode = document.getElementById('qrCode');
             
@@ -182,9 +190,18 @@ document.addEventListener('DOMContentLoaded', function() {
             qrCode.innerHTML = '<p>Generating QR code...</p>';
             qrModal.style.display = 'block';
             
-            fetch(`../../admin/generate_qr.php?UHID=${UHID}`)
-                .then(response => response.json())
+            fetch(`../../admin/generate_qr.php?UHID=${encodeURIComponent(UHID)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('QR code data:', data);
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
                     if (data.qr_code_url) {
                         qrCode.innerHTML = `
                             <div class="qr-container">
@@ -195,20 +212,17 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="qr-info">
                                     <p><strong>UHID:</strong> ${data.UHID}</p>
                                     <p><strong>Name:</strong> ${data.name}</p>
-                                    <p><strong>Phone:</strong> ${data.phone}</p>
                                     <p><strong>Login URL:</strong></p>
                                     <p><a href="${data.url}" target="_blank">${data.url}</a></p>
-                                    <p class="qr-note">Scan this QR code to automatically log in to the patient dashboard.</p>
                                 </div>
-                            </div>
-                        `;
+                            </div>`;
                     } else {
-                        qrCode.innerHTML = `<p class="error">Error: ${data.error || 'Failed to generate QR code'}</p>`;
+                        throw new Error('No QR code URL in response');
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    qrCode.innerHTML = '<p class="error">Error generating QR code</p>';
+                    console.error('Error generating QR code:', error);
+                    qrCode.innerHTML = `<p class="error">Error generating QR code: ${error.message}</p>`;
                 });
         });
     });
