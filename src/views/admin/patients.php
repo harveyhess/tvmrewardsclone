@@ -21,8 +21,7 @@
         <main>
             <section class="patients-section">
                 <div class="actions">
-                    
-                    <a href="../../admin/register_patient.php" class="button">Register New Patient</a>
+                    <button class="button" id="openRegisterModal">Register New Patient</button>
                 </div>
 
                 <?php if (empty($patients)): ?>
@@ -96,9 +95,65 @@
                     <button type="button" class="button cancel">Close</button>
                 </div>
             </div>
+
+            <!-- Register Patient Modal -->
+            <div id="registerPatientModal" class="modal" style="display:none;">
+                <div class="modal-content">
+                    <h2>Register New Patient</h2>
+                    <form id="registerPatientForm" autocomplete="off">
+                        <div class="form-group">
+                            <label for="reg_name">Patient Name</label>
+                            <input type="text" id="reg_name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="reg_uhid">UHID</label>
+                            <input type="text" id="reg_uhid" name="uhid" required>
+                        </div>
+                        <div id="registerPatientMsg"></div>
+                        <button type="submit" class="button">Register</button>
+                        <button type="button" class="button cancel" id="closeRegisterModal">Cancel</button>
+                    </form>
+                </div>
+            </div>
         </main>
     </div>
 
     <script src="../../src/assets/js/admin.js"></script>
+    <script>
+    // Modal open/close logic
+    document.getElementById('openRegisterModal').onclick = function() {
+        document.getElementById('registerPatientModal').style.display = 'block';
+    };
+    document.getElementById('closeRegisterModal').onclick = function() {
+        document.getElementById('registerPatientModal').style.display = 'none';
+        document.getElementById('registerPatientForm').reset();
+        document.getElementById('registerPatientMsg').innerHTML = '';
+    };
+    // AJAX form submit
+    document.getElementById('registerPatientForm').onsubmit = function(e) {
+        e.preventDefault();
+        var form = this;
+        var msgDiv = document.getElementById('registerPatientMsg');
+        msgDiv.innerHTML = '';
+        var data = new FormData(form);
+        fetch('../../admin/process_register_patient.php', {
+            method: 'POST',
+            body: data
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success) {
+                msgDiv.innerHTML = '<div class="success">' + res.success + '</div>';
+                form.reset();
+                setTimeout(() => { window.location.reload(); }, 1000);
+            } else {
+                msgDiv.innerHTML = '<div class="error">' + (res.error || 'Failed to register') + '</div>';
+            }
+        })
+        .catch(() => {
+            msgDiv.innerHTML = '<div class="error">Network error</div>';
+        });
+    };
+    </script>
 </body>
 </html>
