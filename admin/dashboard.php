@@ -32,7 +32,6 @@ $stats = $controller->getDashboardStats();
                 <a href="tiers.php">Tiers</a>
                 <a href="rewards.php">Rewards</a>
                 <a href="upload.php">Upload CSV</a>
-                <a href="transactions.php">Transactions</a>
                 <a href="logout.php">Logout</a>
             </nav>
         </header>
@@ -43,14 +42,7 @@ $stats = $controller->getDashboardStats();
                     <h3>Total Patients</h3>
                     <p><?php echo $stats['total_patients']; ?></p>
                 </div>
-                <div class="stat-card">
-                    <h3>Total Points</h3>
-                    <p><?php echo $stats['total_points']; ?></p>
-                </div>
-                <div class="stat-card">
-                    <h3>Total Transactions</h3>
-                    <p><?php echo $stats['total_transactions']; ?></p>
-                </div>
+                
             </section>
 
             <section class="actions">
@@ -60,8 +52,8 @@ $stats = $controller->getDashboardStats();
                     <a href="patients.php" class="button">View Patients</a>
                     <a href="tiers.php" class="button">Manage Tiers</a>
                     <a href="rewards.php" class="button">Manage Rewards</a>
-                    <a href="transactions.php" class="button">View Transactions</a>
-                    <a href="export.php" class="button">Export Data</a>
+                   
+                   
                 </div>
             </section>
         </main>

@@ -243,35 +243,29 @@ $recentSyncs = $db->fetchAll(
 
                 <!-- Recent Syncs Section -->
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Recent Syncs</h5>
+                        <button id="queryTransactions" class="btn btn-primary">Query Transactions</button>
                     </div>
                     <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>File Name</th>
-                                        <th>Status</th>
-                                        <th>Last Sync</th>
-                                        <th>Last Line</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($recentSyncs as $sync): ?>
+                        <div id="transactionsTable" style="display: none;">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
                                         <tr>
-                                            <td><?php echo htmlspecialchars($sync['file_name']); ?></td>
-                                            <td>
-                                                <span class="badge bg-<?php echo $sync['status'] === 'completed' ? 'success' : ($sync['status'] === 'failed' ? 'danger' : 'warning'); ?>">
-                                                    <?php echo ucfirst($sync['status']); ?>
-                                                </span>
-                                            </td>
-                                            <td><?php echo date('Y-m-d H:i:s', strtotime($sync['last_sync_time'])); ?></td>
-                                            <td><?php echo $sync['last_processed_line']; ?></td>
+                                            <th>File Name</th>
+                                            <th>Status</th>
+                                            <th>Last Sync</th>
+                                            <th>Last Line</th>
                                         </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody id="transactionsBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div id="noTransactions" class="text-center py-4">
+                            <p class="text-muted">Click "Query Transactions" to view recent syncs</p>
                         </div>
                     </div>
                 </div>
@@ -280,5 +274,43 @@ $recentSyncs = $db->fetchAll(
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('queryTransactions').addEventListener('click', function() {
+            const table = document.getElementById('transactionsTable');
+            const noTransactions = document.getElementById('noTransactions');
+            const tbody = document.getElementById('transactionsBody');
+            
+            // Show loading state
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center">Loading...</td></tr>';
+            table.style.display = 'block';
+            noTransactions.style.display = 'none';
+            
+            // Fetch transactions
+            fetch('get_transactions.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.transactions && data.transactions.length > 0) {
+                        tbody.innerHTML = data.transactions.map(sync => `
+                            <tr>
+                                <td>${sync.file_name}</td>
+                                <td>
+                                    <span class="badge bg-${sync.status === 'completed' ? 'success' : (sync.status === 'failed' ? 'danger' : 'warning')}">
+                                        ${sync.status.charAt(0).toUpperCase() + sync.status.slice(1)}
+                                    </span>
+                                </td>
+                                <td>${new Date(sync.last_sync_time).toLocaleString()}</td>
+                                <td>${sync.last_processed_line}</td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="4" class="text-center">No transactions found</td></tr>';
+                    }
+                })
+                .catch(error => {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading transactions</td></tr>';
+                    console.error('Error:', error);
+                });
+        });
+    </script>
 </body>
 </html> 

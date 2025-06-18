@@ -238,4 +238,72 @@ class CsvHandler {
         $settings = $this->db->fetch("SELECT points_rate FROM points_settings ORDER BY id DESC LIMIT 1");
         return $settings ? $settings['points_rate'] : DEFAULT_POINTS_RATE;
     }
+
+    private function processTransaction($dataUC, $points) {
+        try {
+            // Start transaction
+            $this->db->getConnection()->beginTransaction();
+
+            // Check for duplicate transaction first
+            $existingTransaction = $this->db->fetch(
+                "SELECT id FROM transactions 
+                 WHERE UHID = ? AND ReffNo = ? AND Amount = ? AND transaction_date = ?",
+                [$dataUC['UHID'], $dataUC['REFFNO'] ?? '', $dataUC['AMOUNT'], $dataUC['DATE'] ?? date('Y-m-d H:i:s')]
+            );
+
+            if ($existingTransaction) {
+                $this->db->getConnection()->rollBack();
+                $this->skippedRows++;
+                return; // Skip duplicate transaction
+            }
+
+            // Check if patient exists
+            $patient = $this->db->fetch(
+                "SELECT id, total_points FROM patients WHERE UHID = ?",
+                [$dataUC['UHID']]
+            );
+
+            if (!$patient) {
+                // Create new patient
+                $UHID = $this->db->insert('patients', [
+                    'UHID' => $dataUC['UHID'],
+                    'name' => $dataUC['NAME'],
+                    'phone_number' => $dataUC['PHONENUMBER'],
+                    'total_points' => $points,
+                    'qr_token' => bin2hex(random_bytes(16))
+                ]);
+            } else {
+                // Update existing patient's points
+                $newPoints = $patient['total_points'] + $points;
+                $this->db->update(
+                    'patients',
+                    ['total_points' => $newPoints],
+                    'id = ?',
+                    [$patient['id']]
+                );
+                $UHID = $patient['id'];
+            }
+
+            // Record transaction with transaction date
+            $this->db->insert('transactions', [
+                'UHID' => $UHID,
+                'Amount' => $dataUC['AMOUNT'],
+                'ReffNo' => $dataUC['REFFNO'] ?? '',
+                'points_earned' => $points,
+                'transaction_date' => $dataUC['DATE'] ?? date('Y-m-d H:i:s')
+            ]);
+
+            // Update patient's tier
+            $tierController = new TierController(false);
+            $tierController->updatePatientTier($UHID);
+
+            $this->db->getConnection()->commit();
+            $this->processedRows++;
+        } catch (Exception $e) {
+            $this->db->getConnection()->rollBack();
+            $this->skippedRows++;
+            $this->errors[] = "Error processing row: " . $e->getMessage();
+            error_log("Transaction processing error: " . $e->getMessage());
+        }
+    }
 }

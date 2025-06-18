@@ -21,7 +21,7 @@
         <main>
             <section class="patients-section">
                 <div class="actions">
-                    <a href="../../admin/export.php" class="button">Export to CSV</a>
+                    
                     <a href="../../admin/register_patient.php" class="button">Register New Patient</a>
                 </div>
 
@@ -46,7 +46,7 @@
                                     <td><?php echo htmlspecialchars($patient['phone_number']); ?></td>
                                     <td>
                                         <span class="points"><?php echo $patient['total_points']; ?></span>
-                                        <button class="edit-points" data-UHID="<?php echo $patient['id']; ?>">Edit</button>
+                                       
                                     </td>
                                     <td>
                                         <button class="qr-code" data-UHID="<?php echo $patient['id']; ?>">QR Code</button>

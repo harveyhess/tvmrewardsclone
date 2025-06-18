@@ -24,10 +24,7 @@
                     <h3>Total Patients</h3>
                     <p><?php echo $stats['total_patients']; ?></p>
                 </div>
-                <div class="stat-card">
-                    <h3>Total Transactions</h3>
-                    <p><?php echo $stats['total_transactions']; ?></p>
-                </div>
+               
             </section>
 
             <section class="actions">
@@ -35,7 +32,7 @@
                 <div class="action-buttons">
                     <a href="upload.php" class="button">Upload CSV/Excel</a>
                     <a href="patients.php" class="button">View Patients</a>
-                    <a href="export.php" class="button">Export Data</a>
+                   
                     <a href="register_patient.php" class="button">Register New Patient</a>
                 </div>
             </section>
