@@ -32,15 +32,32 @@ class PatientController extends BaseController {
             ]);
         }
 
+        // Get patient with their current tier
         $patient = $this->db->fetch(
-            "SELECT * FROM patients WHERE id = ?",
+            "SELECT p.*, 
+                    (SELECT t.name 
+                     FROM tiers t 
+                     WHERE p.total_points >= t.min_points 
+                     ORDER BY t.min_points DESC 
+                     LIMIT 1) as tier_name
+            FROM patients p 
+            WHERE p.id = ?",
             [$UHID]
         );
 
-        // Always fetch the current tier based on points
-        $tierController = new TierController(false);
-        $tier = $tierController->getTierByPoints($patient['total_points']);
-        $currentTier = $tier ? $tier['name'] : 'No Tier';
+        if (!$patient) {
+            return $this->render('patient/login', [
+                'error' => 'Patient not found'
+            ]);
+        }
+
+        // If no tier found, get the lowest tier
+        if (empty($patient['tier_name'])) {
+            $lowestTier = $this->db->fetch(
+                "SELECT name FROM tiers ORDER BY min_points ASC LIMIT 1"
+            );
+            $patient['tier_name'] = $lowestTier ? $lowestTier['name'] : 'Bronze';
+        }
 
         $transactions = $this->db->fetchAll(
             "SELECT * FROM transactions WHERE UHID = ? ORDER BY transaction_date DESC LIMIT 10",
@@ -50,7 +67,7 @@ class PatientController extends BaseController {
         return $this->render('patient/dashboard', [
             'patient' => $patient,
             'transactions' => $transactions,
-            'current_tier' => $currentTier
+            'current_tier' => $patient['tier_name']
         ]);
     }
 

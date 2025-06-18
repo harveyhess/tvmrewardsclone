@@ -50,7 +50,7 @@ $stats = $controller->getDashboardStats();
         .button {
             display: inline-block;
             padding: 12px 24px;
-            background: #007bff;
+            background: #28a745;
             color: white;
             text-decoration: none;
             border-radius: 6px;
@@ -58,7 +58,7 @@ $stats = $controller->getDashboardStats();
             transition: background 0.3s;
         }
         .button:hover {
-            background: #0056b3;
+            background: #28a745;
             color: white;
         }
         .loading {
@@ -265,8 +265,8 @@ $stats = $controller->getDashboardStats();
         document.addEventListener('DOMContentLoaded', function() {
             updateDashboardStats();
             
-            // Update stats every 30 seconds
-            setInterval(updateDashboardStats, 30000);
+            // Update stats every 5 minutes
+            setInterval(updateDashboardStats, 3000000);
         });
     </script>
 </body>

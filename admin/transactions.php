@@ -7,42 +7,17 @@ session_start();
 
 // Check if user is logged in and is an admin
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['is_admin'])) {
-    header('Location: login.php');
+    header('Location: /admin/login.php');
     exit;
 }
 
-$db = Database::getInstance();
-$UHID = isset($_GET['UHID']) ? trim($_GET['UHID']) : null;
-$search = isset($_GET['search']) ? trim($_GET['search']) : '';
-$perPage = isset($_GET['per_page']) ? (int)$_GET['per_page'] : 10;
+$controller = new AdminController();
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$offset = ($page - 1) * $perPage;
+$limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$uhid = isset($_GET['UHID']) ? trim($_GET['UHID']) : '';
 
-$query = "SELECT t.*, p.name as patient_name, p.UHID as patient_uhid FROM transactions t JOIN patients p ON t.UHID = p.id";
-$params = [];
-if ($UHID) {
-    $query .= " WHERE t.UHID = ?";
-    $params[] = $UHID;
-} elseif ($search) {
-    $query .= " WHERE p.name LIKE ? OR p.UHID LIKE ? OR t.Amount LIKE ? OR t.points_earned LIKE ?";
-    $searchParam = "%$search%";
-    $params = [$searchParam, $searchParam, $searchParam, $searchParam];
-}
-$query .= " ORDER BY t.transaction_date DESC LIMIT ? OFFSET ?";
-$params[] = $perPage;
-$params[] = $offset;
-
-$transactions = $db->fetchAll($query, $params);
-
-$countQuery = "SELECT COUNT(*) as count FROM transactions t JOIN patients p ON t.UHID = p.id";
-if ($UHID) {
-    $countQuery .= " WHERE t.UHID = ?";
-} elseif ($search) {
-    $countQuery .= " WHERE p.name LIKE ? OR p.UHID LIKE ? OR t.Amount LIKE ? OR t.points_earned LIKE ?";
-}
-$countParams = $UHID ? [$UHID] : ($search ? ["%$search%", "%$search%", "%$search%", "%$search%"] : []);
-$total = $db->fetch($countQuery, $countParams)['count'];
-$totalPages = ceil($total / $perPage);
+$result = $controller->getTransactions($page, $limit, $search, $uhid);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -50,64 +25,234 @@ $totalPages = ceil($total / $perPage);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transactions - <?php echo SITE_NAME; ?></title>
-    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/src/assets/css/style.css">
     <style>
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .filters { margin-bottom: 20px; }
-        .filters input, .filters select { margin-right: 10px; padding: 5px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
-        th { background-color: #f4f4f4; }
-        .pagination { margin-top: 20px; }
-        .pagination a { margin: 0 5px; padding: 5px 10px; text-decoration: none; border: 1px solid #ddd; }
-        .pagination a.active { background-color: #007bff; color: white; }
+        :root {
+            --primary-color: #2ecc71;
+            --primary-dark: #27ae60;
+            --primary-light: #a9dfbf;
+        }
+
+        .navbar {
+            background: var(--primary-color);
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        .nav-brand {
+            color: white;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+
+        .nav-menu a:hover {
+            background: var(--primary-dark);
+        }
+
+        .nav-menu a.active {
+            background: var(--primary-dark);
+        }
+
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .filter-button:hover {
+            background: var(--primary-dark);
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: bold;
+            color: #333;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .pagination a {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-decoration: none;
+            color: var(--primary-color);
+        }
+
+        .pagination a:hover {
+            background: var(--primary-light);
+        }
+
+        .pagination .active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .page-size {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .page-size select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
+    <?php include __DIR__ . '/../src/views/shared/loading.php'; ?>
+
     <div class="container">
-        <h1>Transactions</h1>
-        <div class="filters">
-            <form method="GET" action="transactions.php">
-                <input type="text" name="search" placeholder="Search by name, UHID, amount, or points" value="<?php echo htmlspecialchars($search); ?>">
-                <select name="per_page" onchange="this.form.submit()">
-                    <option value="10" <?php echo $perPage == 10 ? 'selected' : ''; ?>>10 per page</option>
-                    <option value="20" <?php echo $perPage == 20 ? 'selected' : ''; ?>>20 per page</option>
-                    <option value="30" <?php echo $perPage == 30 ? 'selected' : ''; ?>>30 per page</option>
-                    <option value="50" <?php echo $perPage == 50 ? 'selected' : ''; ?>>50 per page</option>
-                </select>
-                <button type="submit">Filter</button>
+        <nav class="navbar">
+            <div class="nav-brand"><?php echo SITE_NAME; ?></div>
+            <div class="nav-menu">
+                <a href="/admin/dashboard.php">Dashboard</a>
+                <a href="/admin/patients.php">Patients</a>
+                <a href="/admin/transactions.php" class="active">Transactions</a>
+                <a href="/admin/rewards.php">Rewards</a>
+                <a href="/admin/tiers.php">Tiers</a>
+                <a href="/admin/logout.php">Logout</a>
+            </div>
+        </nav>
+
+        <div class="dashboard-content">
+            <div class="filters">
+                <form method="GET" action="" class="filter-group">
+                    <input type="text" name="search" class="filter-input" 
+                           placeholder="Search by name or UHID" 
+                           value="<?php echo htmlspecialchars($search); ?>">
+                    <input type="text" name="UHID" class="filter-input" 
+                           placeholder="Filter by UHID" 
+                           value="<?php echo htmlspecialchars($uhid); ?>">
+                    <button type="submit" class="filter-button">Filter</button>
                         </form>
-                    </div>
-        <table>
+                </div>
+
+            <div class="table-container">
+                        <div class="table-responsive">
+                    <table>
                                 <thead>
                                     <tr>
-                    <th>Date</th>
-                    <th>UHID</th>
-                    <th>Patient Name</th>
-                    <th>Amount</th>
-                    <th>Points Earned</th>
-                    <th>Reference No</th>
+                                <th>Date</th>
+                                <th>Patient Name</th>
+                                <th>UHID</th>
+                                <th>Amount</th>
+                                <th>Points</th>
+                                <th>Reference</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                <?php foreach ($transactions as $transaction): ?>
-                    <tr>
-                        <td><?php echo htmlspecialchars($transaction['transaction_date']); ?></td>
-                        <td><?php echo htmlspecialchars($transaction['patient_uhid']); ?></td>
-                        <td><?php echo htmlspecialchars($transaction['patient_name']); ?></td>
-                        <td><?php echo htmlspecialchars($transaction['Amount']); ?></td>
-                        <td><?php echo htmlspecialchars($transaction['points_earned']); ?></td>
-                        <td><?php echo htmlspecialchars($transaction['ReffNo']); ?></td>
+                            <?php foreach ($result['transactions'] as $transaction): ?>
+                                <tr>
+                                    <td><?php echo date('Y-m-d', strtotime($transaction['transaction_date'])); ?></td>
+                                    <td><?php echo htmlspecialchars($transaction['patient_name']); ?></td>
+                                    <td><?php echo htmlspecialchars($transaction['patient_uhid']); ?></td>
+                                    <td>₹<?php echo number_format($transaction['Amount'], 2); ?></td>
+                                    <td><?php echo number_format($transaction['points_earned']); ?></td>
+                                    <td><?php echo htmlspecialchars($transaction['ReffNo']); ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
-        <div class="pagination">
-            <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                <a href="?page=<?php echo $i; ?>&per_page=<?php echo $perPage; ?>&search=<?php echo urlencode($search); ?>" class="<?php echo $page == $i ? 'active' : ''; ?>"><?php echo $i; ?></a>
-            <?php endfor; ?>
+                        </div>
+                    </div>
+
+            <div class="pagination">
+                <?php if ($result['currentPage'] > 1): ?>
+                    <a href="?page=<?php echo $result['currentPage'] - 1; ?>&limit=<?php echo $limit; ?>&search=<?php echo urlencode($search); ?>&UHID=<?php echo urlencode($uhid); ?>">Previous</a>
+                <?php endif; ?>
+
+                <?php for ($i = 1; $i <= $result['totalPages']; $i++): ?>
+                    <a href="?page=<?php echo $i; ?>&limit=<?php echo $limit; ?>&search=<?php echo urlencode($search); ?>&UHID=<?php echo urlencode($uhid); ?>" 
+                       class="<?php echo $i === $result['currentPage'] ? 'active' : ''; ?>">
+                        <?php echo $i; ?>
+                    </a>
+                <?php endfor; ?>
+
+                <?php if ($result['currentPage'] < $result['totalPages']): ?>
+                    <a href="?page=<?php echo $result['currentPage'] + 1; ?>&limit=<?php echo $limit; ?>&search=<?php echo urlencode($search); ?>&UHID=<?php echo urlencode($uhid); ?>">Next</a>
+                <?php endif; ?>
+                </div>
+
+            <div class="page-size">
+                <span>Show</span>
+                <select onchange="window.location.href='?page=1&limit=' + this.value + '&search=<?php echo urlencode($search); ?>&UHID=<?php echo urlencode($uhid); ?>'">
+                    <option value="10" <?php echo $limit === 10 ? 'selected' : ''; ?>>10</option>
+                    <option value="20" <?php echo $limit === 20 ? 'selected' : ''; ?>>20</option>
+                    <option value="50" <?php echo $limit === 50 ? 'selected' : ''; ?>>50</option>
+                </select>
+                <span>entries</span>
+            </div>
         </div>
-        <a href="patients.php" class="button">Back to Patients</a>
     </div>
 </body>
 </html> 

@@ -79,7 +79,7 @@ main {
 
 .stat-card p {
     font-size: 24px;
-    color: #007bff;
+    color: #28a745;
     font-weight: bold;
 }
 
@@ -432,7 +432,7 @@ main {
 
 .points-card .points {
     font-size: 32px;
-    color: #007bff;
+    color: #28a745;
     font-weight: bold;
     margin: 10px 0;
 }
@@ -472,7 +472,7 @@ main {
 }
 
 .reward-card .points-cost {
-    color: #007bff;
+    color: #28a745;
     font-weight: bold;
     margin-bottom: 15px;
 }

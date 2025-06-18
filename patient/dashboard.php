@@ -55,7 +55,6 @@ $redemptions = $controller->getPatientRedemptions($_SESSION['user_id']);
             <nav>
                 <a href="dashboard.php" class="active">Dashboard</a>
                 <a href="transactions.php">Transactions</a>
-                <a href="rewards.php">Rewards</a>
                 <a href="logout.php">Logout</a>
             </nav>
         </header>
