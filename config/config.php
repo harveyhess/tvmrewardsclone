@@ -18,11 +18,7 @@ if (!defined('DB_NAME')) define('DB_NAME', 'Veteran');
 
 // Application configuration
 define('SITE_NAME', 'Patient Loyalty Rewards System');
-if ($_SERVER['SERVER_NAME'] === 'loyaltyrewards-production.up.railway.app') {
-    define('SITE_URL', 'https://loyaltyrewards-production.up.railway.app');
-} else {
-    define('SITE_URL', 'http://0.0.0.0:8000'); // or your local dev URL
-}
+define('SITE_URL', 'https://loyaltyrewards-production.up.railway.app');
 define('UPLOAD_DIR', __DIR__ . '/../uploads');
 define('MAX_FILE_SIZE', 5 * 1024 * 1024); // 5MB
 define('ALLOWED_FILE_TYPES', ['csv','xlsx']);
