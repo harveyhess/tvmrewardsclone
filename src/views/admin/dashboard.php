@@ -25,10 +25,6 @@
                     <p><?php echo $stats['total_patients']; ?></p>
                 </div>
                 <div class="stat-card">
-                    <h3>Total Points</h3>
-                    <p><?php echo $stats['total_points']; ?></p>
-                </div>
-                <div class="stat-card">
                     <h3>Total Transactions</h3>
                     <p><?php echo $stats['total_transactions']; ?></p>
                 </div>

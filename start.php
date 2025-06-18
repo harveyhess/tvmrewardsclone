@@ -22,12 +22,16 @@ function runInstallation() {
 // Function to start PHP development server
 function startServer($port) {
     $command = sprintf(
+       // 'php -S localhost:%d router.php',
+
+        //REMEMBER TO CHECK CONFIG  BEFORE ADDITION AND PUSHING 
         'php -S 0.0.0.0:%d router.php',
         $port
     );
     
     echo "Starting server on port {$port}...\n";
-    echo "Access the application at: http://0.0.0.0{$port}\n";
+  //  echo "Access the application at: http://localhost{$port}\n";
+   echo "Access the application at: http://0.0.0.0{$port}\n"; 
     echo "Press Ctrl+C to stop the server\n";
     
     system($command);

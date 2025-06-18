@@ -9,23 +9,11 @@ if (file_exists(__DIR__ . '/../.env')) {
     }
 }
 
-// Parse DATABASE_URL if present and define DB_* constants
-if (defined('DATABASE_URL')) {
-    $url = getenv('DATABASE_URL') ?: DATABASE_URL;
-    $parts = parse_url($url);
-    if ($parts !== false) {
-        if (!defined('DB_HOST') && isset($parts['host'])) define('DB_HOST', $parts['host']);
-        if (!defined('DB_USER') && isset($parts['user'])) define('DB_USER', $parts['user']);
-        if (!defined('DB_PASS') && isset($parts['pass'])) define('DB_PASS', $parts['pass']);
-        if (!defined('DB_NAME') && isset($parts['path'])) define('DB_NAME', ltrim($parts['path'], '/'));
-        if (!defined('DB_PORT') && isset($parts['port'])) define('DB_PORT', $parts['port']);
-    }
-}
-
-// Fallbacks if not set
-if (!defined('DB_HOST')) define('DB_HOST', '127.0.0.1');
+// Database configuration
+if (!defined('DB_HOST')) define('DB_HOST', 'ballast.proxy.rlwy.net');
+if (!defined('DB_PORT')) define('DB_PORT', 24760);
 if (!defined('DB_USER')) define('DB_USER', 'root');
-if (!defined('DB_PASS')) define('DB_PASS', '');
+if (!defined('DB_PASS')) define('DB_PASS', 'XoXJQyYaDfuxRNXatApyitBkwVJlemBZ');
 if (!defined('DB_NAME')) define('DB_NAME', 'Veteran');
 
 // Application configuration
@@ -35,23 +23,18 @@ define('UPLOAD_DIR', __DIR__ . '/../uploads');
 define('MAX_FILE_SIZE', 5 * 1024 * 1024); // 5MB
 define('ALLOWED_FILE_TYPES', ['csv','xlsx']);
 
-// Server configuration
-// PORT is loaded from .env
-
-
-// Fallback if PORT not set Server configuration
+// Server port configuration
 if (!defined('PORT')) {
     $envPort = getenv('PORT');
-    define('PORT', $envPort ?: 8000); // fallback
+    define('PORT', $envPort ?: 8000);
 }
 
-
-
 // Session configuration
-// SESSION_NAME and SESSION_LIFETIME are loaded from .env
+if (!defined('SESSION_NAME')) define('SESSION_NAME', 'Veteran_session');
+if (!defined('SESSION_LIFETIME')) define('SESSION_LIFETIME', 3600);
 
-// Points configuration
-// DEFAULT_POINTS_RATE is loaded from .env
+// Points system configuration
+if (!defined('DEFAULT_POINTS_RATE')) define('DEFAULT_POINTS_RATE', 100);
 
 // Error reporting
 error_reporting(E_ALL);
