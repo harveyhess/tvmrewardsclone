@@ -18,7 +18,11 @@ if (!defined('DB_NAME')) define('DB_NAME', 'Veteran');
 
 // Application configuration
 define('SITE_NAME', 'Patient Loyalty Rewards System');
-define('SITE_URL', defined('SITE_URL') ? SITE_URL : ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['SERVER_NAME'] . (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] != '80' && $_SERVER['SERVER_PORT'] != '443' ? ':' . $_SERVER['SERVER_PORT'] : '')));
+if ($_SERVER['SERVER_NAME'] === 'loyaltyrewards-production.up.railway.app') {
+    define('SITE_URL', 'https://loyaltyrewards-production.up.railway.app');
+} else {
+    define('SITE_URL', 'http://0.0.0.0:8000'); // or your local dev URL
+}
 define('UPLOAD_DIR', __DIR__ . '/../uploads');
 define('MAX_FILE_SIZE', 5 * 1024 * 1024); // 5MB
 define('ALLOWED_FILE_TYPES', ['csv','xlsx']);
@@ -44,3 +48,5 @@ ini_set('display_errors', 1);
 if (!file_exists(UPLOAD_DIR)) {
     mkdir(UPLOAD_DIR, 0777, true);
 }
+
+$siteUrl = SITE_URL ?? ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['SERVER_NAME'] . (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] != '80' && $_SERVER['SERVER_PORT'] != '443' ? ':' . $_SERVER['SERVER_PORT'] : ''));
