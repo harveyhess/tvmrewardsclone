@@ -363,29 +363,45 @@ class AdminController extends BaseController {
         return $rewardController->getPatientRedemptions($UHID);
     }
 
-    public function getTransactions($page = 1, $limit = 10) {
+    public function getTransactions($page = 1, $limit = 10, $search = '', $uhid = '') {
         try {
             $offset = ($page - 1) * $limit;
-            
-            // Optimize transaction query with proper indexing
-            $transactions = $this->db->fetchAll(
-                "SELECT SQL_CALC_FOUND_ROWS
-                    t.id,
-                    t.transaction_date,
-                    t.Amount,
-                    t.points_earned,
-                    t.ReffNo,
-                    p.name as patient_name,
-                    p.UHID as patient_uhid
-                FROM transactions t
-                FORCE INDEX (idx_transaction_date)
-                JOIN patients p ON t.UHID = p.id
-                ORDER BY t.transaction_date DESC
-                LIMIT ? OFFSET ?",
-                [$limit, $offset]
-            );
+            $params = [];
+            $where = [];
 
-            // Get total count using FOUND_ROWS()
+            // Sanitize and build filters
+            if (!empty($search)) {
+                $search = htmlspecialchars(trim($search), ENT_QUOTES, 'UTF-8');
+                $where[] = '(LOWER(p.name) LIKE ? OR LOWER(p.UHID) LIKE ?)';
+                $params[] = '%' . strtolower($search) . '%';
+                $params[] = '%' . strtolower($search) . '%';
+            }
+            if (!empty($uhid)) {
+                $uhid = htmlspecialchars(trim($uhid), ENT_QUOTES, 'UTF-8');
+                $where[] = 'p.UHID = ?';
+                $params[] = $uhid;
+            }
+
+            $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
+
+            $sql = "SELECT SQL_CALC_FOUND_ROWS
+                        t.id,
+                        t.transaction_date,
+                        t.Amount,
+                        t.points_earned,
+                        t.ReffNo,
+                        p.name as patient_name,
+                        p.UHID as patient_uhid
+                    FROM transactions t
+                    FORCE INDEX (idx_transaction_date)
+                    JOIN patients p ON t.UHID = p.id
+                    $whereSql
+                    ORDER BY t.transaction_date DESC
+                    LIMIT ? OFFSET ?";
+            $params[] = (int)$limit;
+            $params[] = (int)$offset;
+
+            $transactions = $this->db->fetchAll($sql, $params);
             $total = $this->db->fetch("SELECT FOUND_ROWS() as count")['count'];
 
             return [

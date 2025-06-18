@@ -23,7 +23,7 @@ if (!$uhid) {
 error_log("[generate_qr.php] Generating QR code for UHID: " . $uhid);
 
 try {
-    $controller = new AdminController();
+$controller = new AdminController();
     $qrData = $controller->generateQrCode($uhid);
 
     if (!$qrData) {
@@ -40,7 +40,7 @@ try {
     $loginUrl = rtrim($siteUrl, '/') . '/patient/login.php?data=' . $qrData['login_data'];
     
     error_log("[generate_qr.php] Generated login URL: " . $loginUrl);
-
+    
     // Generate QR code using Google Charts API with error correction
     $qrCodeUrl = 'https://chart.googleapis.com/chart?' . http_build_query([
         'cht' => 'qr',

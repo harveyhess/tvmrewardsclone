@@ -90,7 +90,7 @@ class PatientController extends BaseController {
 
         // Try exact match first
         $patient = $this->validatePatient($name, $uhid);
-        
+
         if (!$patient) {
             // Try partial name match (first two names)
             $nameParts = explode(' ', $name);
@@ -268,26 +268,26 @@ class PatientController extends BaseController {
     public function logLogin($UHID, $method = 'regular') {
         try {
             // Get patient details directly - try both UHID and id
-            $patient = $this->db->fetch(
+        $patient = $this->db->fetch(
                 "SELECT name FROM patients WHERE UHID = ? OR id = ?",
                 [$UHID, $UHID]
-            );
-            
-            if (!$patient) {
-                error_log("[PatientController] Failed to log login - Patient not found: $UHID");
-                return false;
-            }
+        );
+        
+        if (!$patient) {
+            error_log("[PatientController] Failed to log login - Patient not found: $UHID");
+            return false;
+        }
 
-            // Insert login log with patient details
-            $result = $this->db->insert('login_logs', [
-                'UHID' => $UHID,
-                'patient_name' => $patient['name'],
-                'login_method' => $method,
-                'login_time' => date('Y-m-d H:i:s')
-            ]);
+        // Insert login log with patient details
+        $result = $this->db->insert('login_logs', [
+            'UHID' => $UHID,
+            'patient_name' => $patient['name'],
+            'login_method' => $method,
+            'login_time' => date('Y-m-d H:i:s')
+        ]);
 
-            error_log("[PatientController] Login log result: " . ($result ? "Success" : "Failed"));
-            return $result;
+        error_log("[PatientController] Login log result: " . ($result ? "Success" : "Failed"));
+        return $result;
         } catch (Exception $e) {
             // If table doesn't exist, create it and try again
             if (strpos($e->getMessage(), "Table 'railway.login_logs' doesn't exist") !== false) {

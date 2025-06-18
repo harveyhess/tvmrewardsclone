@@ -189,65 +189,64 @@ $result = $controller->getTransactions($page, $limit, $search, $uhid);
                 <form method="GET" action="" class="filter-group">
                     <input type="text" name="search" class="filter-input" 
                            placeholder="Search by name or UHID" 
-                           value="<?php echo htmlspecialchars($search); ?>">
-                    <input type="text" name="UHID" class="filter-input" 
-                           placeholder="Filter by UHID" 
-                           value="<?php echo htmlspecialchars($uhid); ?>">
+                           value="<?php echo htmlspecialchars($search, ENT_QUOTES, 'UTF-8'); ?>">
                     <button type="submit" class="filter-button">Filter</button>
-                        </form>
-                </div>
+                </form>
+            </div>
 
             <div class="table-container">
-                        <div class="table-responsive">
+                <div class="table-responsive">
                     <table>
-                                <thead>
-                                    <tr>
+                        <thead>
+                            <tr>
                                 <th>Date</th>
                                 <th>Patient Name</th>
                                 <th>UHID</th>
-                                <th>Amount</th>
+                                <th>Amount (KSH)</th>
                                 <th>Points</th>
                                 <th>Reference</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                            <?php foreach ($result['transactions'] as $transaction): ?>
-                                <tr>
-                                    <td><?php echo date('Y-m-d', strtotime($transaction['transaction_date'])); ?></td>
-                                    <td><?php echo htmlspecialchars($transaction['patient_name']); ?></td>
-                                    <td><?php echo htmlspecialchars($transaction['patient_uhid']); ?></td>
-                                    <td>₹<?php echo number_format($transaction['Amount'], 2); ?></td>
-                                    <td><?php echo number_format($transaction['points_earned']); ?></td>
-                                    <td><?php echo htmlspecialchars($transaction['ReffNo']); ?></td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <?php foreach ($result['transactions'] as $transaction): ?>
+                            <tr>
+                                <td><?php echo date('Y-m-d', strtotime($transaction['transaction_date'])); ?></td>
+                                <td><?php echo htmlspecialchars($transaction['patient_name'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                <td><?php echo htmlspecialchars($transaction['patient_uhid'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                <td>KSH <?php echo number_format($transaction['Amount'], 2); ?></td>
+                                <td><?php echo number_format($transaction['points_earned']); ?></td>
+                                <td><?php echo htmlspecialchars($transaction['ReffNo'], ENT_QUOTES, 'UTF-8'); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
             <div class="pagination">
                 <?php if ($result['currentPage'] > 1): ?>
-                    <a href="?page=<?php echo $result['currentPage'] - 1; ?>&limit=<?php echo $limit; ?>&search=<?php echo urlencode($search); ?>&UHID=<?php echo urlencode($uhid); ?>">Previous</a>
+                    <a href="?page=<?php echo $result['currentPage'] - 1; ?>&limit=<?php echo $limit; ?>&search=<?php echo urlencode($search); ?>">Previous</a>
                 <?php endif; ?>
 
                 <?php for ($i = 1; $i <= $result['totalPages']; $i++): ?>
-                    <a href="?page=<?php echo $i; ?>&limit=<?php echo $limit; ?>&search=<?php echo urlencode($search); ?>&UHID=<?php echo urlencode($uhid); ?>" 
+                    <a href="?page=<?php echo $i; ?>&limit=<?php echo $limit; ?>&search=<?php echo urlencode($search); ?>" 
                        class="<?php echo $i === $result['currentPage'] ? 'active' : ''; ?>">
                         <?php echo $i; ?>
                     </a>
                 <?php endfor; ?>
 
                 <?php if ($result['currentPage'] < $result['totalPages']): ?>
-                    <a href="?page=<?php echo $result['currentPage'] + 1; ?>&limit=<?php echo $limit; ?>&search=<?php echo urlencode($search); ?>&UHID=<?php echo urlencode($uhid); ?>">Next</a>
+                    <a href="?page=<?php echo $result['currentPage'] + 1; ?>&limit=<?php echo $limit; ?>&search=<?php echo urlencode($search); ?>">Next</a>
                 <?php endif; ?>
-                </div>
+            </div>
 
             <div class="page-size">
                 <span>Show</span>
-                <select onchange="window.location.href='?page=1&limit=' + this.value + '&search=<?php echo urlencode($search); ?>&UHID=<?php echo urlencode($uhid); ?>'">
+                <select onchange="window.location.href='?page=1&limit=' + this.value + '&search=<?php echo urlencode($search); ?>'">
                     <option value="10" <?php echo $limit === 10 ? 'selected' : ''; ?>>10</option>
                     <option value="20" <?php echo $limit === 20 ? 'selected' : ''; ?>>20</option>
+                    <option value="30" <?php echo $limit === 30 ? 'selected' : ''; ?>>30</option>
+                    <option value="40" <?php echo $limit === 40 ? 'selected' : ''; ?>>40</option>
                     <option value="50" <?php echo $limit === 50 ? 'selected' : ''; ?>>50</option>
                 </select>
                 <span>entries</span>
