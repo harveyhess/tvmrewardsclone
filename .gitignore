@@ -15,7 +15,7 @@
 *.sqlite
 
 # Environment files
-.env *
+.env
 .env.*
 *.env
 
@@ -25,5 +25,5 @@
 .DS_Store
 Thumbs.db
 
-# Ignore test_db.php if it contains sensitive info
+
 test_db.php
