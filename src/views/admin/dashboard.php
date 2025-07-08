@@ -117,6 +117,7 @@
                 <a href="/admin/transactions.php">Transactions</a>
                 <a href="/admin/rewards.php">Rewards</a>
                 <a href="/admin/tiers.php">Tiers</a>
+                <a href="/admin/redemptions.php">Redemptions</a>
                 <a href="/admin/logout.php">Logout</a>
             </div>
             </nav>

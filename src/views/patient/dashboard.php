@@ -20,6 +20,10 @@
             margin: 10px 0;
             text-transform: uppercase;
             letter-spacing: 1px;
+            font-size: 1.3em;
+            color: #27ae60 !important;
+            background: #eafaf1;
+            border: 2px solid #27ae60;
         }
         
         .tier-bronze { 
@@ -141,8 +145,8 @@
                 <div class="points"><?php echo number_format($patient['total_points']); ?></div>
                 
                 <h2>Current Tier</h2>
-                <div class="tier-badge tier-<?php echo strtolower($current_tier); ?>">
-                    <?php echo htmlspecialchars($current_tier); ?>
+                <div class="tier-badge tier-<?php echo strtolower(str_replace(' ', '-', $patient['tier_name'])); ?>">
+                    <?php echo htmlspecialchars($patient['tier_name']); ?>
                 </div>
 
                 <h2>UHID</h2>

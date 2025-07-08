@@ -156,12 +156,16 @@ class PatientController extends BaseController {
 
     public function getPatientDetails($UHID) {
         $patient = $this->db->fetch(
-            "SELECT p.*, COALESCE(t.name, 'No Tier') as tier_name 
-            FROM patients p 
-            LEFT JOIN tiers t ON p.tier_id = t.id 
-            WHERE p.id = ?",
+            "SELECT * FROM patients WHERE id = ?",
             [$UHID]
         );
+        if (!$patient) return null;
+
+        // Get the correct tier for the patient's points
+        require_once __DIR__ . '/TierController.php';
+        $tierController = new TierController(false);
+        $tier = $tierController->getTierByPoints($patient['total_points']);
+        $patient['tier_name'] = $tier ? $tier['name'] : 'No Tier';
         return $patient;
     }
 

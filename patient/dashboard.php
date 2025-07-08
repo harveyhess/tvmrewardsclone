@@ -47,6 +47,21 @@ $redemptions = $controller->getPatientRedemptions($_SESSION['user_id']);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Dashboard - <?php echo SITE_NAME; ?></title>
     <link rel="stylesheet" href="../src/assets/css/style.css">
+    <style>
+        .tier-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin: 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 1.3em;
+            color: #27ae60 !important;
+            background: #eafaf1;
+            border: 2px solid #27ae60;
+        }
+    </style>
 </head>
 <body>
     <div class="patient-container">
@@ -67,7 +82,9 @@ $redemptions = $controller->getPatientRedemptions($_SESSION['user_id']);
                 </div>
                 <div class="points-card">
                     <h3>Current Tier</h3>
-                    <p class="tier"><?php echo htmlspecialchars($patient['tier_name'] ?? 'No Tier'); ?></p>
+                    <span class="tier-badge tier-<?php echo strtolower(str_replace(' ', '-', $patient['tier_name'])); ?>">
+                        <?php echo htmlspecialchars($patient['tier_name']); ?>
+                    </span>
                 </div>
                 <div class="points-card">
                     <h3>UHID</h3>
@@ -87,11 +104,11 @@ $redemptions = $controller->getPatientRedemptions($_SESSION['user_id']);
                                 <p class="description"><?php echo htmlspecialchars($reward['description']); ?></p>
                                 <p class="points-cost"><?php echo $reward['points_cost']; ?> points</p>
                                 <?php if ($patient['total_points'] >= $reward['points_cost']): ?>
-                                    <button class="redeem-button" data-reward-id="<?php echo $reward['id']; ?>">
+                                    <button class="redeem-btn" data-reward-id="<?php echo $reward['id']; ?>">
                                         Redeem
                                     </button>
                                 <?php else: ?>
-                                    <button class="redeem-button disabled" disabled>
+                                    <button class="redeem-btn disabled" disabled>
                                         Not enough points
                                     </button>
                                 <?php endif; ?>
@@ -161,28 +178,113 @@ $redemptions = $controller->getPatientRedemptions($_SESSION['user_id']);
         </main>
     </div>
 
+    <!-- Custom Modal for Redeem Confirmation -->
+    <div id="redeemModal" class="modal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); align-items:center; justify-content:center;">
+        <div style="background:#fff; padding:2em; border-radius:8px; max-width:90vw; width:350px; box-shadow:0 2px 10px rgba(0,0,0,0.2); text-align:center; position:relative;">
+            <h3 style="margin-bottom:1em;">Confirm Redemption</h3>
+            <p id="redeemModalMessage" style="margin-bottom:2em;">Are you sure you want to redeem this reward?</p>
+            <div id="redeemModalLoading" style="display:none; margin-bottom:1em;">
+                <span style="display:inline-block; width:24px; height:24px; border:3px solid #ccc; border-top:3px solid #28a745; border-radius:50%; animation:spin 1s linear infinite;"></span>
+                <span style="margin-left:0.5em;">Processing...</span>
+            </div>
+            <div style="display:flex; gap:1em; justify-content:center;">
+                <button id="modalConfirmBtn" style="padding:0.5em 1.5em; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer;">Yes</button>
+                <button id="modalCancelBtn" style="padding:0.5em 1.5em; background:#ccc; color:#333; border:none; border-radius:4px; cursor:pointer;">No</button>
+            </div>
+        </div>
+    </div>
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+
     <script>
-        document.querySelectorAll('.redeem-button:not(.disabled)').forEach(button => {
+        let selectedRewardId = null;
+        const modal = document.getElementById('redeemModal');
+        const confirmBtn = document.getElementById('modalConfirmBtn');
+        const cancelBtn = document.getElementById('modalCancelBtn');
+        const loadingDiv = document.getElementById('redeemModalLoading');
+        const modalMessage = document.getElementById('redeemModalMessage');
+
+        document.querySelectorAll('.redeem-btn:not(.disabled)').forEach(button => {
             button.addEventListener('click', function() {
-                if (confirm('Are you sure you want to redeem this reward?')) {
-                    const rewardId = this.dataset.rewardId;
-                    fetch('redeem_reward.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ reward_id: rewardId })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            location.reload();
-                        } else {
-                            alert('Error redeeming reward: ' + data.error);
-                        }
-                    });
-                }
+                selectedRewardId = this.dataset.rewardId;
+                modal.style.display = 'flex';
+                loadingDiv.style.display = 'none';
+                modalMessage.textContent = 'Are you sure you want to redeem this reward?';
+                confirmBtn.disabled = false;
+                cancelBtn.disabled = false;
             });
+        });
+
+        confirmBtn.addEventListener('click', function() {
+            if (!selectedRewardId) {
+                alert('Error: No reward selected.');
+                modal.style.display = 'none';
+                return;
+            }
+            loadingDiv.style.display = 'inline-block';
+            confirmBtn.disabled = true;
+            cancelBtn.disabled = true;
+            modalMessage.textContent = '';
+            fetch('redeem_reward.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ reward_id: selectedRewardId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingDiv.style.display = 'none';
+                confirmBtn.disabled = false;
+                cancelBtn.disabled = false;
+                selectedRewardId = null;
+                if (data.success) {
+                    // Try to update points, rewards, and redemptions in the DOM if data is available
+                    if (data.updated_points !== undefined && data.updated_rewards && data.updated_redemptions) {
+                        // Update points
+                        const pointsElem = document.querySelector('.points-summary .points');
+                        if (pointsElem) pointsElem.textContent = data.updated_points;
+                        // Update rewards
+                        const rewardsGrid = document.querySelector('.available-rewards .rewards-grid');
+                        if (rewardsGrid) rewardsGrid.innerHTML = data.updated_rewards;
+                        // Update redemptions
+                        const redemptionsTable = document.querySelector('.recent-redemptions tbody');
+                        if (redemptionsTable) redemptionsTable.innerHTML = data.updated_redemptions;
+                        modal.style.display = 'none';
+                    } else {
+                        // Fallback: reload page quickly
+                        modalMessage.textContent = 'Redemption successful! Reloading...';
+                        setTimeout(() => { location.reload(); }, 600);
+                    }
+                } else {
+                    modalMessage.textContent = 'Error redeeming reward: ' + data.error;
+                    confirmBtn.disabled = false;
+                    cancelBtn.disabled = false;
+                }
+            })
+            .catch(() => {
+                loadingDiv.style.display = 'none';
+                modalMessage.textContent = 'Network error. Please try again.';
+                confirmBtn.disabled = false;
+                cancelBtn.disabled = false;
+            });
+        });
+
+        cancelBtn.addEventListener('click', function() {
+            modal.style.display = 'none';
+            selectedRewardId = null;
+        });
+
+        // Optional: Close modal when clicking outside the modal content
+        window.addEventListener('click', function(event) {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+                selectedRewardId = null;
+            }
         });
     </script>
 </body>

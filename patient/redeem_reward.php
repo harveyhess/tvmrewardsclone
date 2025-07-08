@@ -2,6 +2,8 @@
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../src/controllers/PatientController.php';
 
+// Set session name before starting session
+session_name(SESSION_NAME);
 session_start();
 
 // Check if user is logged in

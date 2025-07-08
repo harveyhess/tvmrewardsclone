@@ -40,7 +40,7 @@ try {
                 <a href="patients.php">Patients</a>
                 <a href="tiers.php">Tiers</a>
                 <a href="rewards.php" class="active">Rewards</a>
-                <a href="upload.php">Upload CSV</a>
+                <a href="upload.php">Upload Excel</a>
                 <a href="transactions.php">Transactions</a>
                 <a href="logout.php">Logout</a>
             </nav>

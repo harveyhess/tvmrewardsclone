@@ -477,7 +477,7 @@ main {
     margin-bottom: 15px;
 }
 
-.redeem-button {
+.redeem-btn {
     padding: 8px 16px;
     background-color: #28a745;
     color: white;
@@ -487,11 +487,11 @@ main {
     width: 100%;
 }
 
-.redeem-button:hover {
+.redeem-btn:hover {
     background-color: #218838;
 }
 
-.redeem-button.disabled {
+.redeem-btn.disabled {
     background-color: #6c757d;
     cursor: not-allowed;
 }

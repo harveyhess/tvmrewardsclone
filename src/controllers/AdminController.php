@@ -420,4 +420,22 @@ class AdminController extends BaseController {
             ];
         }
     }
+
+    public function getAllRedemptions($page = 1, $limit = 20) {
+        $offset = ($page - 1) * $limit;
+        $sql = "SELECT r.*, rw.name as reward_name, p.name as patient_name, p.UHID as patient_uhid
+                FROM redemptions r
+                JOIN rewards rw ON r.reward_id = rw.id
+                JOIN patients p ON r.UHID = p.id
+                ORDER BY r.created_at DESC
+                LIMIT ? OFFSET ?";
+        $redemptions = $this->db->fetchAll($sql, [$limit, $offset]);
+        $total = $this->db->fetch("SELECT COUNT(*) as count FROM redemptions")['count'];
+        return [
+            'redemptions' => $redemptions,
+            'total' => $total,
+            'currentPage' => $page,
+            'totalPages' => ceil($total / $limit)
+        ];
+    }
 }

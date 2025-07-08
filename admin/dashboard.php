@@ -81,6 +81,7 @@ $stats = $controller->getDashboardStats();
                 <a href="transactions.php" class="btn btn-outline-primary">Transactions</a>
                 <a href="tiers.php" class="btn btn-outline-primary">Tiers</a>
                 <a href="rewards.php" class="btn btn-outline-primary">Rewards</a>
+                <a href="redemptions.php" class="btn btn-outline-primary">Redemptions</a>
                 <a href="logout.php" class="btn btn-outline-danger">Logout</a>
             </nav>
         </header>
