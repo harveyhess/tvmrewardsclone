@@ -1,0 +1,29 @@
+# Dependency directory
+/vendor/
+
+# Log files
+/logs/
+/*.log
+
+# Uploaded/generated files
+/uploads/
+/uploads/*
+*.xlsx
+
+# Database files
+/config/database.sqlite
+*.sqlite
+
+# Environment files
+.env
+.env.*
+*.env
+
+
+
+# OS/Editor files
+.DS_Store
+Thumbs.db
+
+# Ignore test_db.php if it contains sensitive info
+test_db.php
