@@ -1,7 +1,8 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/yourusername/public_html
+    - export DEPLOYPATH=/home/pqqlulab/public_html
+    - export REPOPATH=/home/pqqlulab/repositories/tvmrewardsclone
 
     # Show current contents before cleaning
     - echo "Before cleaning public_html:"
@@ -9,12 +10,11 @@ deployment:
 
     # Delete all EXCEPT .htaccess and index.php
     - echo "Cleaning public_html except .htaccess and index.php"
-    - /bin/cp $REPOPATH/index.php $DEPLOYPATH
     - find $DEPLOYPATH -mindepth 1 ! -name '.htaccess' ! -name 'index.php' -exec rm -rf {} +
 
     # Copy all repo files to public_html (excluding .git and .cpanel.yml)
     - echo "Copying files to public_html..."
-    - rsync -av --exclude='.git' --exclude='.cpanel.yml' ./ $DEPLOYPATH/
+    - rsync -av --exclude='.git' --exclude='.cpanel.yml' $REPOPATH/ $DEPLOYPATH/
 
     # Show result
     - echo "After deployment:"
