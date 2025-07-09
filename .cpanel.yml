@@ -9,6 +9,7 @@ deployment:
 
     # Delete all EXCEPT .htaccess and index.php
     - echo "Cleaning public_html except .htaccess and index.php"
+    - /bin/cp $REPOPATH/index.php $DEPLOYPATH
     - find $DEPLOYPATH -mindepth 1 ! -name '.htaccess' ! -name 'index.php' -exec rm -rf {} +
 
     # Copy all repo files to public_html (excluding .git and .cpanel.yml)
