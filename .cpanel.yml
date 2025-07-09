@@ -1,6 +1,5 @@
----
 deployment:
   tasks:
     - echo "Starting app via start.sh"
-    - /bin/bash ./start.sh
+    - /bin/bash /home/pqqlulab/repositories/tvmrewardsclone/start.sh
     - echo "Deployment done"
