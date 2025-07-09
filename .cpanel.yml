@@ -2,25 +2,14 @@
 deployment:
   tasks:
     - export DEPLOYPATH=/home/pqqlulab/public_html
+    - export REPOPATH=/home/pqqlulab/repositories/tvmrewardsclone
     - echo "Before cleaning public_html"
     - ls -la $DEPLOYPATH
-    - echo "Cleaning public_html (except .htaccess)"
-    - find $DEPLOYPATH -mindepth 1 ! -name '.htaccess' -delete
+    - echo "Cleaning public_html (except .htaccess and wp-content)"
+    - find $DEPLOYPATH -mindepth 1 ! -name '.htaccess' ! -name 'wp-content' -delete
     - echo "After cleaning public_html"
     - ls -la $DEPLOYPATH
     - echo "Copying app to public_html"
-    - ls -la
-    - /bin/cp -R index.php 404.php router.php install.php config src includes admin patient .htaccess composer.json README.md README_RAILWAY.md Readme $DEPLOYPATH
-    - find $DEPLOYPATH/logs -type f -delete
-    - rm -rf $DEPLOYPATH/vendor
-    - rm -rf $DEPLOYPATH/logs
-    - rm -rf $DEPLOYPATH/uploads
-    - rm -f $DEPLOYPATH/*.log
-    - rm -f $DEPLOYPATH/*.xlsx
-    - rm -f $DEPLOYPATH/config/database.sqlite
-    - rm -f $DEPLOYPATH/*.sqlite
-    - rm -f $DEPLOYPATH/.env*
-    - rm -f $DEPLOYPATH/.DS_Store
-    - rm -f $DEPLOYPATH/Thumbs.db
-    - rm -f $DEPLOYPATH/test_db.php
+    - ls -la $REPOPATH
+    - /bin/cp -R $REPOPATH/index.php $REPOPATH/404.php $REPOPATH/router.php $REPOPATH/install.php $REPOPATH/config $REPOPATH/src $REPOPATH/includes $REPOPATH/admin $REPOPATH/patient $REPOPATH/.htaccess $REPOPATH/composer.json $REPOPATH/README.md $REPOPATH/README_RAILWAY.md $REPOPATH/Readme $DEPLOYPATH
     - echo "Deployment done"
