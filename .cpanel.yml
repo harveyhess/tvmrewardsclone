@@ -1,4 +1,10 @@
 ---
 deployment:
   tasks:
-    - echo "Hello from cPanel deploy"
+    - export DEPLOYPATH=/home/pqqlulab/public_html
+    - echo "Cleaning public_html (except .htaccess)"
+    - find $DEPLOYPATH -mindepth 1 ! -name '.htaccess' -delete
+    - echo "Copying app to public_html"
+    - /bin/cp -R index.php start.php install.php 404.php router.php start.sh config src includes admin patient logs uploads vendor composer.json .htaccess $DEPLOYPATH
+    - echo "Starting app"
+    - /bin/bash $DEPLOYPATH/start.sh
