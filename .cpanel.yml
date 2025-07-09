@@ -1,6 +1,6 @@
 ---
 deployment:
   tasks:
-    - echo "STARTING DEPLOYMENT"
-    - /bin/bash ./start.sh >> start.log 2>&1
-    - echo "DEPLOYMENT COMPLETE"
+    - echo "Starting app via start.sh"
+    - /bin/bash ./start.sh
+    - echo "Deployment done"
