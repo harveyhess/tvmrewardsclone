@@ -10,15 +10,15 @@ if (file_exists(__DIR__ . '/../.env')) {
 }
 
 // Database configuration
-if (!defined('DB_HOST')) define('DB_HOST', 'ballast.proxy.rlwy.net');
-if (!defined('DB_PORT')) define('DB_PORT', 26612);
-if (!defined('DB_USER')) define('DB_USER', 'root');
-if (!defined('DB_PASS')) define('DB_PASS', '');
-if (!defined('DB_NAME')) define('DB_NAME', 'Veteran');
+if (!defined('DB_HOST')) define('DB_HOST');
+if (!defined('DB_PORT')) define('DB_PORT');
+if (!defined('DB_USER')) define('DB_USER');
+if (!defined('DB_PASS')) define('DB_PASS');
+if (!defined('DB_NAME')) define('DB_NAME');
 
 // Application configuration
 define('SITE_NAME', 'Patient Loyalty Rewards System');
-define('SITE_URL', 'https://loyaltyrewards-production.up.railway.app');
+define('SITE_URL', 'https://https://tvmhrewards.co.ke');
 define('UPLOAD_DIR', __DIR__ . '/../uploads');
 define('MAX_FILE_SIZE', 5 * 1024 * 1024); // 5MB
 define('ALLOWED_FILE_TYPES', ['csv','xlsx']);
