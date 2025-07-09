@@ -1,5 +1,9 @@
+---
 deployment:
   tasks:
-    - echo "Starting app via start.sh"
-    - /bin/bash /home/pqqlulab/repositories/tvmrewardsclone/start.sh
-    - echo "Deployment done"
+    - echo "Cleaning public_html"
+    - rm -rf /home/pqqlulab/public_html/*
+    - echo "Copying app to public_html"
+    - rsync -av --exclude='.git' /home/pqqlulab/repositories/tvmrewardsclone/ /home/pqqlulab/public_html/
+    - echo "Starting app"
+    - /bin/bash /home/pqqlulab/public_html/start.sh
