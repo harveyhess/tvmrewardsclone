@@ -10,7 +10,7 @@ deployment:
     - ls -la $DEPLOYPATH
     - echo "Copying app to public_html"
     - ls -la
-    - /bin/cp -R index.php start.php install.php 404.php router.php start.sh config src includes admin patient .htaccess composer.json vendor README.md README_RAILWAY.md Readme $DEPLOYPATH
+    - /bin/cp -R index.php 404.php router.php install.php config src includes admin patient .htaccess composer.json README.md README_RAILWAY.md Readme $DEPLOYPATH
     - find $DEPLOYPATH/logs -type f -delete
     - rm -rf $DEPLOYPATH/vendor
     - rm -rf $DEPLOYPATH/logs
