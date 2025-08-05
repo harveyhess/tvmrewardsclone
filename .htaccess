@@ -7,7 +7,8 @@ RewriteRule ^assets/ - [L]
 # Allow direct access to PHP files in patient and admin directories
 RewriteRule ^(patient|admin)/.*\.php$ - [L]
 
-# Prevent direct access to src directory
+# Block direct access to most of /src, except /src/assets/
+RewriteCond %{REQUEST_URI} !^/src/assets/
 RewriteRule ^src/ - [F,L]
 
 # Route all other requests through the router

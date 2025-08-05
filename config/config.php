@@ -18,7 +18,7 @@ if (!defined('DB_NAME')) define('DB_NAME');
 
 // Application configuration
 define('SITE_NAME', 'Patient Loyalty Rewards System');
-define('SITE_URL', 'https://https://tvmhrewards.co.ke');
+define('SITE_URL', 'https://tvmhrewards.co.ke');
 define('UPLOAD_DIR', __DIR__ . '/../uploads');
 define('MAX_FILE_SIZE', 5 * 1024 * 1024); // 5MB
 define('ALLOWED_FILE_TYPES', ['csv','xlsx']);

@@ -42,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="../src/assets/css/style.css">
 </head>
 <body>
+    <div class="login-header">Admin Login - <?php echo SITE_NAME; ?></div>
     <div class="login-container">
         <h1>Admin Login</h1>
         <?php if ($error): ?>
@@ -56,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <label for="password">Password:</label>
                 <input type="password" id="password" name="password" required>
             </div>
-            <button type="submit">Login</button>
+            <button type="submit" class="button">Login</button>
         </form>
         <div class="back-link">
             <a href="../index.php">Back to Home</a>

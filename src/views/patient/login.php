@@ -58,8 +58,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body>
+    <?php include __DIR__ . '/../shared/loading.php'; ?>
+    <div class="login-header">Patient Login - <?php echo SITE_NAME; ?></div>
     <div class="login-container">
-        <h1>Patient Login</h1>
         <?php if ($error): ?>
             <div class="error"><?php echo htmlspecialchars($error); ?></div>
         <?php endif; ?>
@@ -73,10 +74,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input type="text" id="uhid" name="uhid" value="<?php echo htmlspecialchars($uhid); ?>" required placeholder="Enter your UHID" <?php echo $uhid ? 'readonly' : ''; ?>>
             </div>
             <button type="submit" class="button" id="loginBtn">Login</button>
-            <div id="loadingSpinner" style="display:none; margin-top:10px; text-align:center;">
-                <span class="spinner" style="display:inline-block; width:24px; height:24px; border:3px solid #ccc; border-top:3px solid #333; border-radius:50%; animation:spin 1s linear infinite;"></span>
-                <span style="margin-left:8px;">Logging in...</span>
-            </div>
         </form>
     </div>
     <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']): ?>
@@ -91,11 +88,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     </style>
     <script>
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
-        var btn = document.getElementById('loginBtn');
-        var spinner = document.getElementById('loadingSpinner');
-        btn.disabled = true;
-        spinner.style.display = 'block';
+    document.getElementById('loginForm').addEventListener('submit', function() {
+        showLoading();
     });
     </script>
 </body>

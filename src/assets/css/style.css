@@ -569,3 +569,107 @@ main {
 .rewards-table .delete-reward:hover {
     background-color: #c82333;
 } 
+
+/* --- BRAND COLORS --- */
+:root {
+    --brand-primary: #218838; /* Deep blue/gray */
+    --brand-accent: #6c757d;  /* Green accent */
+    --brand-light: #f4f4f4;
+    --brand-white: #fff;
+    --brand-error: #ff6b6b;
+}
+
+/* --- HEADER BAR FOR LOGIN --- */
+.login-header {
+    width: 100%;
+    background: var(--brand-primary);
+    color: var(--brand-white);
+    padding: 24px 0 16px 0;
+    text-align: center;
+    font-size: 2rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    margin-bottom: 32px;
+    box-shadow: 0 2px 8px rgba(44,62,80,0.07);
+}
+
+/* --- LOGIN CONTAINER IMPROVEMENTS --- */
+.login-container {
+    max-width: 400px;
+    margin: 60px auto;
+    padding: 32px 24px 24px 24px;
+    background: var(--brand-white);
+    border-radius: 8px;
+    box-shadow: 0 0 16px rgba(44,62,80,0.08);
+}
+
+.login-container h1 {
+    display: none; /* Hide duplicate h1, use .login-header instead */
+}
+
+/* --- FORM LABELS & INPUTS --- */
+.form-group label {
+    color: var(--brand-primary);
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: block;
+    font-size: 1rem;
+}
+.form-group input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 5px;
+    font-size: 1rem;
+    margin-bottom: 10px;
+    background: var(--brand-light);
+    transition: border 0.2s;
+}
+.form-group input:focus {
+    border-color: var(--brand-primary);
+    outline: none;
+}
+
+/* --- LOGIN BUTTON --- */
+.button, .login-container button, .btn.btn-primary {
+    width: 100%;
+    padding: 12px 0;
+    background: var(--brand-primary);
+    color: var(--brand-white);
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(44,62,80,0.07);
+}
+.button:hover, .login-container button:hover, .btn.btn-primary:hover {
+    background: var(--brand-accent);
+}
+
+/* --- ERROR MESSAGE --- */
+.error, .error-message {
+    background: var(--brand-error);
+    color: var(--brand-white);
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    text-align: center;
+    font-weight: 500;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 500px) {
+    .login-container {
+        padding: 16px 6px 16px 6px;
+        margin: 30px 4px;
+    }
+    .login-header {
+        font-size: 1.3rem;
+        padding: 16px 0 10px 0;
+        margin-bottom: 18px;
+    }
+} 

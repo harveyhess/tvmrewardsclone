@@ -127,36 +127,35 @@ debug_log("Current session state: " . print_r($_SESSION, true));
     <link rel="stylesheet" href="../src/assets/css/style.css">
 </head>
 <body>
+    <?php include __DIR__ . '/../src/views/shared/loading.php'; ?>
+    <div class="login-header">Patient Login - <?php echo SITE_NAME; ?></div>
     <div class="login-container">
-        <div class="login-box">
-            <h1>Patient Login</h1>
-            
             <?php if ($error): ?>
-                <div class="error-message"><?php echo htmlspecialchars($error); ?></div>
+            <div class="error"><?php echo htmlspecialchars($error); ?></div>
             <?php endif; ?>
-            
-            <form method="POST" action="login.php">
+            <form method="POST" action="login.php" id="loginForm">
                 <div class="form-group">
                     <label for="name">Full Name</label>
                     <input type="text" id="name" name="name" required 
                            value="<?php echo htmlspecialchars($_POST['name'] ?? ''); ?>"
                            placeholder="Enter your full name">
                 </div>
-                
                 <div class="form-group">
                     <label for="uhid">UHID</label>
                     <input type="text" id="uhid" name="uhid" required 
                            value="<?php echo htmlspecialchars($_POST['uhid'] ?? ''); ?>"
                            placeholder="Enter your UHID">
                 </div>
-                
-                <button type="submit" class="btn btn-primary">Login</button>
+            <button type="submit" class="button">Login</button>
             </form>
-            
             <p class="login-info">
                 Don't have an account? Please contact the clinic administrator.
             </p>
-        </div>
     </div>
+    <script>
+    document.getElementById('loginForm').addEventListener('submit', function() {
+        showLoading();
+    });
+    </script>
 </body>
 </html> 
